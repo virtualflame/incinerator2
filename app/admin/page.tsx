@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 // Define the structure for an NFT collection
@@ -46,14 +46,40 @@ export default function AdminPage() {
   }
 
   // Handle admin login
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      setIsAuthenticated(true)
-    } else {
-      alert("Invalid password")
+    
+    try {
+      // Get the base URL dynamically
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://incineratorfinal.vercel.app' 
+        : ''
+      
+      const response = await fetch(`${baseUrl}/api/auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      })
+
+      if (response.ok) {
+        setIsAuthenticated(true)
+        sessionStorage.setItem('isAdminAuthenticated', 'true')
+      } else {
+        alert('Invalid password')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      alert('Authentication failed')
     }
   }
+
+  // Add this effect to check auth state on load
+  useEffect(() => {
+    const isAuth = sessionStorage.getItem('isAdminAuthenticated') === 'true'
+    setIsAuthenticated(isAuth)
+  }, [])
 
   // Show login form if not authenticated
   if (!isAuthenticated) {

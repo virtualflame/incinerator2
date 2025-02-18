@@ -1,0 +1,46 @@
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Base Flame -->
+  <path d="
+    M250 50
+    Q 350 200, 300 300
+    Q 400 350, 300 400
+    Q 250 450, 200 400
+    Q 100 350, 200 300
+    Q 150 200, 250 50
+    Z" 
+    stroke="#ff6600" 
+    stroke-width="20"
+    fill="none"
+    opacity="0.5"
+  />
+  
+  <!-- Middle Flame -->
+  <path d="
+    M250 100
+    Q 320 200, 280 275
+    Q 350 300, 280 350
+    Q 250 375, 220 350
+    Q 150 300, 220 275
+    Q 180 200, 250 100
+    Z" 
+    stroke="#ff9933" 
+    stroke-width="15"
+    fill="none"
+    opacity="0.7"
+  />
+
+  <!-- Center Flame -->
+  <path d="
+    M250 150
+    Q 290 225, 270 275
+    Q 300 300, 270 325
+    Q 250 340, 230 325
+    Q 200 300, 230 275
+    Q 210 225, 250 150
+    Z" 
+    stroke="#ff3300" 
+    stroke-width="10"
+    fill="none"
+    opacity="0.9"
+  />
+</svg> 

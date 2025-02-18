@@ -78,13 +78,13 @@ export default function AdminPage() {
 
   // Main admin interface
   return (
-    <div className="container p-4">
+    <div className="container p-4 text-gray-900">
       <h1 className="text-2xl font-bold mb-4">NFT Collection Management</h1>
       <div className="mt-4">
         {collections.map((collection, index) => (
-          <div key={index} className="border p-4 mb-4 bg-gray-50">
+          <div key={index} className="border p-4 mb-4 bg-white rounded-lg shadow">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl">Collection #{index + 1}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Collection #{index + 1}</h2>
               <button 
                 onClick={() => handleSaveCollection(index)}
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -94,7 +94,7 @@ export default function AdminPage() {
             </div>
             
             {/* Collection Name Input */}
-            <label className="block mb-1">Collection Name</label>
+            <label className="block mb-1 font-medium text-gray-900">Collection Name</label>
             <input
               type="text"
               placeholder="Enter collection name"
@@ -104,11 +104,11 @@ export default function AdminPage() {
                 newCollections[index].collectionName = e.target.value
                 setCollections(newCollections)
               }}
-              className="border p-2 mb-2 w-full"
+              className="border p-2 mb-2 w-full text-gray-900 bg-white"
             />
 
             {/* Collection Image URL Input */}
-            <label className="block mb-1">Collection Image URL</label>
+            <label className="block mb-1 font-medium text-gray-900">Collection Image URL</label>
             <input
               type="text"
               placeholder="Enter image URL (e.g., https://example.com/image.png)"
@@ -118,7 +118,7 @@ export default function AdminPage() {
                 newCollections[index].imageUrl = e.target.value
                 setCollections(newCollections)
               }}
-              className="border p-2 mb-2 w-full"
+              className="border p-2 mb-2 w-full text-gray-900 bg-white"
             />
             
             {/* Image Preview */}
@@ -134,7 +134,7 @@ export default function AdminPage() {
             )}
 
             {/* Contract Address Input */}
-            <label className="block mb-1">VeChain Contract Address</label>
+            <label className="block mb-1 font-medium text-gray-900">VeChain Contract Address</label>
             <input
               type="text"
               placeholder="Enter NFT contract address"
@@ -144,11 +144,11 @@ export default function AdminPage() {
                 newCollections[index].contractAddress = e.target.value
                 setCollections(newCollections)
               }}
-              className="border p-2 mb-2 w-full"
+              className="border p-2 mb-2 w-full text-gray-900 bg-white"
             />
 
             {/* Total Supply Input */}
-            <label className="block mb-1">Total NFT Supply</label>
+            <label className="block mb-1 font-medium text-gray-900">Total NFT Supply</label>
             <input
               type="number"
               placeholder="Enter total supply of NFTs"
@@ -158,11 +158,11 @@ export default function AdminPage() {
                 newCollections[index].totalSupply = parseInt(e.target.value)
                 setCollections(newCollections)
               }}
-              className="border p-2 mb-2 w-full"
+              className="border p-2 mb-2 w-full text-gray-900 bg-white"
             />
 
             {/* Weekly Allocation Input */}
-            <label className="block mb-1">Weekly B3TR Allocation</label>
+            <label className="block mb-1 font-medium text-gray-900">Weekly B3TR Allocation</label>
             <input
               type="number"
               placeholder="Enter B3TR token allocation"
@@ -172,11 +172,11 @@ export default function AdminPage() {
                 newCollections[index].weeklyAllocation = parseInt(e.target.value)
                 setCollections(newCollections)
               }}
-              className="border p-2 mb-2 w-full"
+              className="border p-2 mb-2 w-full text-gray-900 bg-white"
             />
 
             {/* Start Date Input */}
-            <label className="block mb-1">Start Date</label>
+            <label className="block mb-1 font-medium text-gray-900">Start Date</label>
             <input
               type="date"
               value={collection.startDate}
@@ -185,11 +185,11 @@ export default function AdminPage() {
                 newCollections[index].startDate = e.target.value
                 setCollections(newCollections)
               }}
-              className="border p-2 mb-2 w-full"
+              className="border p-2 mb-2 w-full text-gray-900 bg-white"
             />
 
             {/* End Date Input */}
-            <label className="block mb-1">End Date</label>
+            <label className="block mb-1 font-medium text-gray-900">End Date</label>
             <input
               type="date"
               value={collection.endDate}
@@ -198,7 +198,7 @@ export default function AdminPage() {
                 newCollections[index].endDate = e.target.value
                 setCollections(newCollections)
               }}
-              className="border p-2 mb-2 w-full"
+              className="border p-2 mb-2 w-full text-gray-900 bg-white"
             />
           </div>
         ))}

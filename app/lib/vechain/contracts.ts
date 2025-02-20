@@ -45,7 +45,7 @@ export const isValidContract = async (contractAddress: string) => {
   try {
     const contract = getNFTContract(contractAddress)
     const code = await contract.getCode()
-    return code.length > 2 // Check if contract exists
+    return code.code.length > 2 // Fixed: access the code property
   } catch (error) {
     return false
   }

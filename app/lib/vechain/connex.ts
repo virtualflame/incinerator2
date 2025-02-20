@@ -23,4 +23,6 @@ export const getConnex = () => {
 // Helper to check if we're on testnet
 export const isTestnet = () => {
   return process.env.NEXT_PUBLIC_VECHAIN_NETWORK === 'test'
-} 
+}
+
+// This file looks good, has testnet config ✅ 

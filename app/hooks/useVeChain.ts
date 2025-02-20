@@ -1,15 +1,19 @@
+"use client"
+
 import { useState, useEffect } from 'react'
-import { getConnex } from '@/app/lib/vechain/connex'
+import { getConnex } from '../lib/vechain'
+import { useContext } from 'react'
+import { Web3Context } from '../components/web3/Web3Provider'
 
 type WalletType = 'veworld' | 'sync2' | null
 
 export function useVeChain() {
+  const { connex } = useContext(Web3Context)
   const [isConnected, setIsConnected] = useState(false)
   const [account, setAccount] = useState<string | null>(null)
   const [walletType, setWalletType] = useState<WalletType>(null)
 
   const connectWallet = async (type: WalletType) => {
-    const connex = getConnex()
     if (!connex) return
 
     try {
@@ -31,7 +35,6 @@ export function useVeChain() {
   }
 
   const checkNetwork = async () => {
-    const connex = getConnex()
     if (!connex) return false
     
     const genesis = await connex.thor.genesis()

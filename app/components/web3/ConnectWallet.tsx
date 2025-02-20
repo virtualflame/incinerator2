@@ -6,7 +6,7 @@ import { isTestnet } from '@/app/lib/vechain/connex'
 import { TestnetFaucet } from './TestnetFaucet'
 import { TokenBalances } from './TokenBalances'
 
-export function ConnectWallet() {
+const ConnectWallet = () => {
   const { isConnected, account, walletType, connectWallet } = useVeChain()
   const [isConnecting, setIsConnecting] = useState(false)
   const [showOptions, setShowOptions] = useState(false)
@@ -75,4 +75,6 @@ export function ConnectWallet() {
       <TestnetFaucet />
     </div>
   )
-} 
+}
+
+export default ConnectWallet 

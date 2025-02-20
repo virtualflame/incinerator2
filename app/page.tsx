@@ -3,11 +3,15 @@
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
+import ClientOnly from './components/web3/ClientOnly'
 
-// Dynamically import with no SSR
+// Dynamically import with no SSR and loading fallback
 const ConnectWallet = dynamic(
-  () => import('./components/web3/ConnectWallet').then(mod => mod.ConnectWallet),
-  { ssr: false }
+  () => import('./components/web3/ConnectWallet'),
+  { 
+    ssr: false,
+    loading: () => <div>Loading wallet...</div>
+  }
 )
 
 // Import the Collection type
@@ -41,7 +45,9 @@ export default function Home() {
       <header>
         <h1>VFS Incinerator</h1>
         <div className="mt-4">
-          <ConnectWallet />
+          <ClientOnly>
+            <ConnectWallet />
+          </ClientOnly>
         </div>
       </header>
       <main>

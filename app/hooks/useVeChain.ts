@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getConnex } from '@/lib/vechain/connex'
+import { getConnex } from '@/app/lib/vechain/connex'
 
 type WalletType = 'veworld' | 'sync2' | null
 

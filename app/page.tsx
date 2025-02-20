@@ -6,8 +6,14 @@ import dynamic from 'next/dynamic'
 import ClientOnly from './components/web3/ClientOnly'
 
 // Dynamically import the web3 components
-const Web3Provider = dynamic(() => import('./components/web3/Web3Provider'), { ssr: false })
-const ConnectWallet = dynamic(() => import('./components/web3/ConnectWallet'), { ssr: false })
+const Web3Provider = dynamic(
+  () => import('./components/web3/Web3Provider').then(mod => mod.Web3Provider), 
+  { ssr: false }
+)
+const ConnectWallet = dynamic(
+  () => import('./components/web3/ConnectWallet').then(mod => mod.ConnectWallet), 
+  { ssr: false }
+)
 
 // Import the Collection type
 type Collection = {

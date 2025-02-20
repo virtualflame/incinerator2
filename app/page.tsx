@@ -5,14 +5,9 @@ import { useState, useEffect, Suspense } from "react"
 import dynamic from 'next/dynamic'
 import ClientOnly from './components/web3/ClientOnly'
 
-// Lazy load the wallet component
-const ConnectWallet = dynamic(
-  () => import('./components/web3/ConnectWallet'),
-  { 
-    ssr: false,
-    loading: () => <div>Loading wallet...</div>
-  }
-)
+// Dynamically import the web3 components
+const Web3Provider = dynamic(() => import('./components/web3/Web3Provider'), { ssr: false })
+const ConnectWallet = dynamic(() => import('./components/web3/ConnectWallet'), { ssr: false })
 
 // Import the Collection type
 type Collection = {
@@ -47,7 +42,9 @@ const PageContent = () => {
         <h1>VFS Incinerator</h1>
         <div className="mt-4">
           <Suspense fallback={<div>Loading wallet...</div>}>
-            <ConnectWallet />
+            <Web3Provider>
+              <ConnectWallet />
+            </Web3Provider>
           </Suspense>
         </div>
       </header>

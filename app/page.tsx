@@ -33,8 +33,14 @@ const PageContent = () => {
       </header>
       <main>
         <div className="button-container mb-12">
+          <Link href="#" className="button flame-button">
+            <span>Burn Now</span>
+          </Link>
           <Link href="/mission" className="button">
             <span>Mission</span>
+          </Link>
+          <Link href="#" className="button">
+            <span>Vote</span>
           </Link>
           <Link href="#" className="button">
             <span>Contact</span>

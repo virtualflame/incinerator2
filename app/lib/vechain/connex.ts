@@ -2,6 +2,9 @@ import Connex from '@vechain/connex'
 
 let connex: Connex | null = null
 
+const TESTNET_NODE = 'https://testnet.veblocks.net'
+const TESTNET_NETWORK = 'test'
+
 export const initConnex = () => {
   // Only initialize on client side
   if (typeof window === 'undefined') return null

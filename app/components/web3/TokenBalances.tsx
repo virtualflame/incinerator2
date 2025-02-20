@@ -10,6 +10,7 @@ const TESTNET_B3TR_CONTRACT = '0x0000000000000000000000000000000000000000' // Re
 const MAINNET_B3TR_CONTRACT = '0x0000000000000000000000000000000000000000' // Replace with actual mainnet contract
 
 export function TokenBalances({ address }: { address: string }) {
+  const { connex } = useContext(Web3Context)
   const [balances, setBalances] = useState({
     vet: '0',
     vtho: '0',
@@ -20,7 +21,6 @@ export function TokenBalances({ address }: { address: string }) {
   useEffect(() => {
     const fetchBalances = async () => {
       try {
-        const connex = getConnex()
         if (!connex || !address) return
 
         // Get VET balance
@@ -63,7 +63,7 @@ export function TokenBalances({ address }: { address: string }) {
     }
 
     fetchBalances()
-  }, [address])
+  }, [address, connex])
 
   if (loading) return <div className="text-center text-sm">Loading balances...</div>
 

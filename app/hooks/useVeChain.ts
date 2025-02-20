@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { getConnex } from '../lib/vechain'
+import { useState } from 'react'
 import { useContext } from 'react'
 import { Web3Context } from '../components/web3/Web3Provider'
 

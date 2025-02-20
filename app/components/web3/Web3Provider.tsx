@@ -1,23 +1,25 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect } from 'react'
-import dynamic from 'next/dynamic'
+import { initConnex, getConnex } from '../../lib/vechain'
 
-const ConnexContext = createContext(null)
+export const Web3Context = createContext<any>(null)
 
-export function Web3Provider({ children }) {
+export function Web3Provider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    // Only initialize on client
-    setIsReady(true)
+    if (typeof window !== 'undefined') {
+      initConnex()
+      setIsReady(true)
+    }
   }, [])
 
   if (!isReady) return null
 
   return (
-    <ConnexContext.Provider value={{}}>
+    <Web3Context.Provider value={{ connex: getConnex() }}>
       {children}
-    </ConnexContext.Provider>
+    </Web3Context.Provider>
   )
 } 

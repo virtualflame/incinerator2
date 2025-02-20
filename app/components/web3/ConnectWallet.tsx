@@ -1,8 +1,8 @@
 "use client"
 
-import { useVeChain } from '../../hooks/useVeChain'
 import { useState } from 'react'
-import { isTestnet } from '../../lib/vechain/connex'
+import { useVeChain } from '../../hooks/useVeChain'
+import { isTestnet } from '../../lib/vechain'
 import { TestnetFaucet } from './TestnetFaucet'
 import { TokenBalances } from './TokenBalances'
 

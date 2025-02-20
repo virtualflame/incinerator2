@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import dynamic from 'next/dynamic'
 import ClientOnly from './components/web3/ClientOnly'
 
-// Dynamically import with no SSR and loading fallback
+// Lazy load the wallet component
 const ConnectWallet = dynamic(
   () => import('./components/web3/ConnectWallet'),
   { 
@@ -25,7 +25,8 @@ type Collection = {
   collectionName: string  // Name of the NFT collection
 }
 
-export default function Home() {
+// Wrap the entire page content
+const PageContent = () => {
   const [collections, setCollections] = useState<Collection[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -45,9 +46,9 @@ export default function Home() {
       <header>
         <h1>VFS Incinerator</h1>
         <div className="mt-4">
-          <ClientOnly>
+          <Suspense fallback={<div>Loading wallet...</div>}>
             <ConnectWallet />
-          </ClientOnly>
+          </Suspense>
         </div>
       </header>
       <main>
@@ -143,6 +144,15 @@ export default function Home() {
         <p>&copy; 2025 VFS Incinerator. All rights reserved.</p>
       </footer>
     </div>
+  )
+}
+
+// Export a simple wrapper
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PageContent />
+    </Suspense>
   )
 }
 

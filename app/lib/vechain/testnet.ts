@@ -1,6 +1,7 @@
 export const TESTNET_RESOURCES = {
-  faucet: 'https://faucet.vecha.in/',
-  explorer: 'https://explore-testnet.vechain.org/',
+  faucet: 'https://faucet.vecha.in',
+  explorer: 'https://explore-testnet.vechain.org',
+  node: 'https://testnet.veblocks.net',
   documentation: 'https://docs.vechain.org/thor/get-started/network.html#testnet'
 }
 

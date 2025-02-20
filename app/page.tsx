@@ -21,8 +21,7 @@ const PageContent = () => {
   useEffect(() => {
     const savedCollections = localStorage.getItem('nftCollections')
     if (savedCollections) {
-      const parsedCollections = JSON.parse(savedCollections)
-      setCollections(parsedCollections)
+      setCollections(JSON.parse(savedCollections))
     }
     setIsLoading(false)
   }, [])
@@ -32,7 +31,19 @@ const PageContent = () => {
       <header>
         <h1>VFS Incinerator</h1>
       </header>
-      {/* Rest of your UI without web3 components */}
+      <main>
+        <div className="button-container mb-12">
+          <Link href="/mission" className="button">
+            <span>Mission</span>
+          </Link>
+          <Link href="#" className="button">
+            <span>Contact</span>
+          </Link>
+        </div>
+      </main>
+      <footer>
+        <p>&copy; 2025 VFS Incinerator. All rights reserved.</p>
+      </footer>
     </div>
   )
 }

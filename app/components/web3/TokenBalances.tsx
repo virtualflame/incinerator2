@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useContext } from 'react'
-import { Web3Context } from '../web3/Web3Provider'
+import { Web3Context } from './Web3Provider'
 import { isTestnet } from '../../lib/vechain'
 
 // Testnet B3TR token contract - we'll need to deploy this

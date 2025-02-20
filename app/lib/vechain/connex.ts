@@ -7,7 +7,7 @@ export const initConnex = () => {
     const network = process.env.NEXT_PUBLIC_VECHAIN_NETWORK || 'test'
     connex = new Connex({
       node: process.env.NEXT_PUBLIC_VECHAIN_NODE || 'https://testnet.veblocks.net',
-      network: network as 'test' | 'main' // Type assertion to fix error
+      network: network as 'test' | 'main'
     })
   }
   return connex

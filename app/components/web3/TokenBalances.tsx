@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getConnex } from '@/lib/vechain/connex'
-import { isTestnet } from '@/lib/vechain/connex'
+import { getConnex } from '@/app/lib/vechain/connex'
+import { isTestnet } from '@/app/lib/vechain/connex'
 
 // Testnet B3TR token contract - we'll need to deploy this
 const TESTNET_B3TR_CONTRACT = '0x0000000000000000000000000000000000000000' // Replace with actual testnet contract

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useContext } from 'react'
 import { Web3Context } from '../components/web3/Web3Provider'
+import { getConnex } from '../lib/vechain'
 
 type WalletType = 'veworld' | 'sync2' | null
 

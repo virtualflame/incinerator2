@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { ConnectWallet } from '@/components/web3/ConnectWallet'
 
 // Import the Collection type
 type Collection = {
@@ -33,6 +34,9 @@ export default function Home() {
     <div className="container">
       <header>
         <h1>VFS Incinerator</h1>
+        <div className="mt-4">
+          <ConnectWallet />
+        </div>
       </header>
       <main>
         <div className="button-container mb-12">

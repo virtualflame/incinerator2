@@ -50,12 +50,7 @@ export default function AdminPage() {
     e.preventDefault()
     
     try {
-      // Get the base URL dynamically
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://incineratorfinal.vercel.app' 
-        : ''
-      
-      const response = await fetch(`${baseUrl}/api/auth`, {
+      const response = await fetch('/api/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,12 +60,12 @@ export default function AdminPage() {
 
       if (response.ok) {
         setIsAuthenticated(true)
+        // Store auth state securely
         sessionStorage.setItem('isAdminAuthenticated', 'true')
       } else {
         alert('Invalid password')
       }
     } catch (error) {
-      console.error('Login error:', error)
       alert('Authentication failed')
     }
   }

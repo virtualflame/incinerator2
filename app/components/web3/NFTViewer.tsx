@@ -1,14 +1,13 @@
 "use client"
 
-import { useVeChain } from '@/hooks/useVeChain'
-import { getNFTContract, ERC721_ABI } from '@/lib/vechain/contracts'
 import { useState, useEffect } from 'react'
-import { isTestnet } from '@/lib/vechain/connex'
+import { useVeChain } from '../../hooks/useVeChain'
+import { getNFTContract, ERC721_ABI } from '../../lib/vechain/contracts'
 
-type NFT = {
+interface NFT {
   tokenId: string
   imageUrl: string | null
-  metadata: any
+  metadata: any | null  // We'll type this properly later
 }
 
 export function NFTViewer({ contractAddress }: { contractAddress: string }) {
@@ -18,21 +17,22 @@ export function NFTViewer({ contractAddress }: { contractAddress: string }) {
 
   useEffect(() => {
     const fetchNFTs = async () => {
-      if (!account) return
+      if (!account || !contractAddress) return
 
       try {
-        if (isTestnet()) {
-          console.log('Fetching NFTs on testnet')
-          // Add testnet-specific logic here
-        }
-
         const contract = getNFTContract(contractAddress)
-        // Get balance
-        const balance = await contract.method(ERC721_ABI[0]).call(account)
+        // Get balance using proper ABI object
+        const balanceMethod = contract.method({
+          constant: true,
+          inputs: [{ name: "owner", type: "address" }],
+          name: "balanceOf",
+          outputs: [{ name: "balance", type: "uint256" }],
+          type: "function"
+        })
+        const balance = await balanceMethod.call(account)
         
-        // This is where we'll need to handle the token URI fetching
-        // For now, just store the token IDs
-        const tokenIds = [] // We'll implement this properly
+        // Initialize array with proper type
+        const tokenIds: string[] = []
         
         setNfts(tokenIds.map(id => ({
           tokenId: id,
@@ -41,9 +41,6 @@ export function NFTViewer({ contractAddress }: { contractAddress: string }) {
         })))
       } catch (error) {
         console.error('Error fetching NFTs:', error)
-        if (isTestnet()) {
-          console.log('Make sure you have testnet tokens')
-        }
       } finally {
         setLoading(false)
       }
@@ -52,15 +49,15 @@ export function NFTViewer({ contractAddress }: { contractAddress: string }) {
     fetchNFTs()
   }, [account, contractAddress])
 
-  if (loading) return <div>Loading your NFTs...</div>
-  if (!nfts.length) return <div>No NFTs found in this collection</div>
+  if (loading) return <div>Loading NFTs...</div>
+  if (nfts.length === 0) return <div>No NFTs found</div>
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 gap-4">
       {nfts.map(nft => (
-        <div key={nft.tokenId} className="border rounded-lg p-4">
+        <div key={nft.tokenId} className="border p-4 rounded">
           <p>Token ID: {nft.tokenId}</p>
-          {/* We'll add image display once we implement metadata fetching */}
+          {nft.imageUrl && <img src={nft.imageUrl} alt={`NFT ${nft.tokenId}`} />}
         </div>
       ))}
     </div>

@@ -1,5 +1,4 @@
-export { default as ConnectWallet } from './ConnectWallet'
+export { ConnectWallet } from './ConnectWallet'
 export * from './TokenBalances'
 export * from './TestnetFaucet'
 export * from './Web3Provider'
-export * from './NFTViewer' 

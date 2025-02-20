@@ -1,7 +1,7 @@
 "use client"
 
-import { TESTNET_RESOURCES } from '../../lib/vechain/testnet'
-import { isTestnet } from '../../lib/vechain/connex'
+import { TESTNET_RESOURCES } from '../../lib/vechain'
+import { isTestnet } from '../../lib/vechain'
 
 export function TestnetFaucet({ address }: { address?: string | null }) {
   if (!isTestnet()) return null

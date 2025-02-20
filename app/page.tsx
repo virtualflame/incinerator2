@@ -2,7 +2,13 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { ConnectWallet } from '@/app/components/web3/ConnectWallet'
+import dynamic from 'next/dynamic'
+
+// Dynamically import with no SSR
+const ConnectWallet = dynamic(
+  () => import('./components/web3/ConnectWallet').then(mod => mod.ConnectWallet),
+  { ssr: false }
+)
 
 // Import the Collection type
 type Collection = {

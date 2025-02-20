@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { ConnectWallet } from './components/web3/ConnectWallet'
+import { ConnectWallet } from '@/app/components/web3/ConnectWallet'
 
 // Import the Collection type
 type Collection = {

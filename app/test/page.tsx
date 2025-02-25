@@ -31,6 +31,7 @@ export default function TestPage() {
 
   // Add these states
   const [nftBalance, setNftBalance] = useState<{[key: string]: number}>({})
+  const [nftCount, setNftCount] = useState(10)
 
   // Connect wallet
   const connectWallet = async () => {
@@ -213,7 +214,7 @@ export default function TestPage() {
               type="text"
               value={newCollection.name}
               onChange={e => setNewCollection(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded text-black"
               placeholder="Test Collection"
             />
           </div>
@@ -226,6 +227,18 @@ export default function TestPage() {
               onChange={e => setNewCollection(prev => ({ ...prev, symbol: e.target.value }))}
               className="w-full p-2 border rounded"
               placeholder="TEST"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-1">Number of NFTs</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={nftCount}
+              onChange={e => setNftCount(Number(e.target.value))}
+              className="w-full p-2 border rounded text-black"
             />
           </div>
 

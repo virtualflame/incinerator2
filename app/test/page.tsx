@@ -14,8 +14,6 @@ export default function TestPage() {
   const [address, setAddress] = useState('')
   const [status, setStatus] = useState('')
   const [balance, setBalance] = useState({ vet: '0', vtho: '0' })
-  const [mintStatus, setMintStatus] = useState('')
-  const [deployStatus, setDeployStatus] = useState('')
   const [collections, setCollections] = useState<Collection[]>([])
   
   // Add collection form
@@ -46,27 +44,6 @@ export default function TestPage() {
     }
   }
 
-  const mintTestNFT = async () => {
-    try {
-      setMintStatus('Minting...')
-      
-      // Get contract instance (we'll add this)
-      const nft = await vechain.getContract(
-        TEST_NFT_ADDRESS,  // We'll get this after deployment
-        TEST_NFT_ABI
-      )
-
-      // Mint NFT
-      const tx = await nft.mint()
-      await tx.wait()
-
-      setMintStatus('NFT Minted!')
-    } catch (error) {
-      console.error('Mint error:', error)
-      setMintStatus(`Error: ${error.message}`)
-    }
-  }
-
   const deployCollection = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -84,22 +61,12 @@ export default function TestPage() {
 
   const mintNFT = async (address: string) => {
     try {
-      setMintStatus('Minting...')
+      setStatus('Minting coming soon!')
+      return
       
-      // Get contract instance (we'll add this)
-      const nft = await vechain.getContract(
-        address,  // Use the collection address
-        TEST_NFT_ABI
-      )
-
-      // Mint NFT
-      const tx = await nft.mint()
-      await tx.wait()
-
-      setMintStatus('NFT Minted!')
+      // We'll add minting code later
     } catch (error) {
-      console.error('Mint error:', error)
-      setMintStatus(`Error: ${error.message}`)
+      setStatus(`Error: ${error.message}`)
     }
   }
 
@@ -150,13 +117,6 @@ export default function TestPage() {
         {status && (
           <p className="mt-4 text-gray-600">{status}</p>
         )}
-
-        <button 
-          onClick={mintTestNFT}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          Mint Test NFT
-        </button>
       </div>
 
       <div className="mt-8 bg-white rounded-lg shadow p-6">

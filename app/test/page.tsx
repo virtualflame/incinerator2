@@ -103,11 +103,11 @@ export default function TestPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 p-3 rounded">
-                <p className="text-gray-500 text-sm">VET Balance</p>
+                <p className="text-gray-700 text-sm">VET Balance</p>
                 <p className="text-lg font-bold">{balance.vet}</p>
               </div>
               <div className="bg-gray-50 p-3 rounded">
-                <p className="text-gray-500 text-sm">VTHO Balance</p>
+                <p className="text-gray-700 text-sm">VTHO Balance</p>
                 <p className="text-lg font-bold">{balance.vtho}</p>
               </div>
             </div>
@@ -115,7 +115,7 @@ export default function TestPage() {
         )}
 
         {status && (
-          <p className="mt-4 text-gray-600">{status}</p>
+          <p className="mt-4 text-gray-800">{status}</p>
         )}
       </div>
 
@@ -125,7 +125,7 @@ export default function TestPage() {
         {/* Deploy Form */}
         <form onSubmit={deployCollection} className="space-y-4 mb-8">
           <div>
-            <label className="block text-sm font-medium mb-1">Collection Name</label>
+            <label className="block text-sm font-semibold mb-1">Collection Name</label>
             <input
               type="text"
               value={newCollection.name}
@@ -136,7 +136,7 @@ export default function TestPage() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Symbol</label>
+            <label className="block text-sm font-semibold mb-1">Symbol</label>
             <input
               type="text"
               value={newCollection.symbol}
@@ -159,7 +159,7 @@ export default function TestPage() {
           {collections.map((collection, i) => (
             <div key={i} className="border rounded p-4">
               <h3 className="font-bold">{collection.name}</h3>
-              <p className="text-sm text-gray-500">{collection.symbol}</p>
+              <p className="text-sm text-gray-700">{collection.symbol}</p>
               <p className="font-mono text-xs mt-2">{collection.address}</p>
               
               {/* Add mint button to each collection */}

@@ -1,5 +1,8 @@
-// After compilation, copy the bytecode from artifacts/contracts/TestNFTCollection.sol/TestNFTCollection.json
-export const TEST_NFT_BYTECODE = "...bytecode here..."
+// This will be filled after contract compilation
+export const TEST_NFT_BYTECODE = ''
 
-// Also export the ABI for later use
-export const TEST_NFT_ABI = [...] // Copy from the same JSON file 
+// Empty ABI for now
+export const TEST_NFT_ABI = []
+
+// We'll update these after deploying the first collection
+export const TEST_NFT_ADDRESS = '' 

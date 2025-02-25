@@ -72,30 +72,11 @@ export default function TestPage() {
     try {
       setStatus('Deploying collection...')
       
-      // Deploy using VeWorld
-      const connex = window.connex
-      const bytecode = "..." // We'll get this after compiling TestNFTCollection
-      
-      const txResponse = await connex.vendor.sign('tx', [{
-        value: '0',
-        data: bytecode,
-        gas: 2000000
-      }]).request()
-      
-      // Wait for deployment
-      setStatus('Waiting for deployment...')
-      await connex.thor.transaction(txResponse.txid).getReceipt()
-      
-      // Save collection
-      const collection = {
-        address: txResponse.txid, // This will be the contract address
-        name: newCollection.name,
-        symbol: newCollection.symbol,
-        totalSupply: 100
-      }
-      
-      setCollections(prev => [...prev, collection])
-      setStatus('Collection deployed!')
+      // Temporary - show message until we have bytecode
+      setStatus('Contract deployment coming soon!')
+      return
+
+      // Rest of deployment code...
     } catch (error) {
       setStatus(`Error: ${error.message}`)
     }

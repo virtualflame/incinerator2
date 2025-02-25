@@ -1,8 +1,9 @@
 // Declare global VeChain types
 declare global {
   interface Window {
-    Connex: any;      // VeChain Connex
-    vechain: any;     // VeWorld wallet
+    connex: any;
+    ethers: any;
+    vechain: any;
     thor: any;        // Sync2 wallet
   }
 }

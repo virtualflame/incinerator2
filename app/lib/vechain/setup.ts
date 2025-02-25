@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 import { VeChainNetwork } from './types'
 
 // VeChain testnet configuration
@@ -17,12 +18,7 @@ export const initTestnet = () => {
   if (typeof window === 'undefined') return null
   
   try {
-    const connex = new window.Connex({
-      node: TESTNET_CONFIG.node,
-      network: TESTNET_CONFIG.network,
-      genesisId: TESTNET_CONFIG.genesisID
-    })
-    return connex
+    return window.connex
   } catch (error) {
     console.error('Failed to initialize testnet:', error)
     return null

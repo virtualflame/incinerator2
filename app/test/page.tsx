@@ -2,12 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import { vechain } from '../lib/vechain/connection'
+import { TEST_NFT_BYTECODE, TEST_NFT_ABI } from '../lib/contracts/bytecode'
+import { ethers } from 'ethers'
 
 interface Collection {
   address: string
   name: string
   symbol: string
   totalSupply: number
+}
+
+// Add type for error
+type ErrorWithMessage = {
+  message: string;
 }
 
 export default function TestPage() {
@@ -21,6 +28,9 @@ export default function TestPage() {
     name: '',
     symbol: ''
   })
+
+  // Add these states
+  const [nftBalance, setNftBalance] = useState<{[key: string]: number}>({})
 
   // Connect wallet
   const connectWallet = async () => {
@@ -39,8 +49,9 @@ export default function TestPage() {
         }
       }
     } catch (error) {
-      console.error('Connection error:', error)
-      setStatus(`Error: ${error.message}`)
+      const err = error as ErrorWithMessage
+      console.error('Connection error:', err)
+      setStatus(`Error: ${err.message}`)
     }
   }
 
@@ -49,24 +60,89 @@ export default function TestPage() {
     try {
       setStatus('Deploying collection...')
       
-      // Temporary - show message until we have bytecode
-      setStatus('Contract deployment coming soon!')
-      return
-
-      // Rest of deployment code...
+      if (!window.connex) {
+        throw new Error('VeWorld not connected')
+      }
+      
+      const connex = window.connex
+      
+      // Encode constructor parameters (name, symbol, initialOwner)
+      const params = window.ethers.utils.defaultAbiCoder.encode(
+        ['string', 'string', 'address'],
+        [newCollection.name, newCollection.symbol, address] // address is the connected wallet
+      )
+      
+      // Deploy contract
+      const txResponse = await connex.vendor.sign('tx', [{
+        value: '0',
+        data: TEST_NFT_BYTECODE + params.slice(2), // Remove '0x' prefix
+        gas: 2000000
+      }]).request()
+      
+      setStatus('Waiting for deployment...')
+      const receipt = await connex.thor.transaction(txResponse.txid).getReceipt()
+      
+      // Save collection
+      const collection = {
+        address: receipt.outputs[0].contractAddress,
+        name: newCollection.name,
+        symbol: newCollection.symbol,
+        totalSupply: 100
+      }
+      
+      setCollections(prev => [...prev, collection])
+      setStatus('Collection deployed!')
     } catch (error) {
-      setStatus(`Error: ${error.message}`)
+      const err = error as ErrorWithMessage
+      setStatus(`Error: ${err.message}`)
     }
   }
 
-  const mintNFT = async (address: string) => {
+  const mintNFT = async (collectionAddress: string) => {
     try {
-      setStatus('Minting coming soon!')
-      return
+      setStatus('Minting NFT...')
       
-      // We'll add minting code later
+      const connex = window.connex
+      const abi = new ethers.Interface(TEST_NFT_ABI)
+      const data = abi.encodeFunctionData('mint', [])
+      
+      // Send mint transaction
+      const txResponse = await connex.vendor.sign('tx', [{
+        to: collectionAddress,
+        value: '0',
+        data: data,
+        gas: 1000000
+      }]).request()
+      
+      setStatus('Waiting for mint...')
+      await connex.thor.transaction(txResponse.txid).getReceipt()
+      setStatus('NFT Minted!')
     } catch (error) {
-      setStatus(`Error: ${error.message}`)
+      const err = error as ErrorWithMessage
+      setStatus(`Error: ${err.message}`)
+    }
+  }
+
+  // Add this function
+  const getCollectionInfo = async (collection: Collection) => {
+    try {
+      const connex = window.connex
+      const abi = new ethers.Interface(TEST_NFT_ABI)
+      
+      // Get NFT balance
+      const data = abi.encodeFunctionData('balanceOf', [address])
+      const balance = await connex.thor
+        .account(collection.address)
+        .method(abi.getFunction('balanceOf'))
+        .call(address)
+      
+      setNftBalance(prev => ({
+        ...prev,
+        [collection.address]: Number(balance.decoded[0])
+      }))
+    } catch (error) {
+      const err = error as ErrorWithMessage
+      console.error('Error getting collection info:', err)
     }
   }
 
@@ -77,6 +153,13 @@ export default function TestPage() {
       setCollections(JSON.parse(savedCollections))
     }
   }, [])
+
+  // Add this effect to load collection info
+  useEffect(() => {
+    if (address && collections.length > 0) {
+      collections.forEach(getCollectionInfo)
+    }
+  }, [address, collections])
 
   return (
     <div className="container mx-auto p-8">
@@ -161,8 +244,8 @@ export default function TestPage() {
               <h3 className="font-bold">{collection.name}</h3>
               <p className="text-sm text-gray-700">{collection.symbol}</p>
               <p className="font-mono text-xs mt-2">{collection.address}</p>
+              <p className="text-sm mt-2">Your NFTs: {nftBalance[collection.address] || 0}</p>
               
-              {/* Add mint button to each collection */}
               <button 
                 onClick={() => mintNFT(collection.address)}
                 className="mt-3 px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"

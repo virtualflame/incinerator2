@@ -11,10 +11,18 @@ declare global {
 export type VeChainNetwork = 'mainnet' | 'testnet'
 
 // Connection status type
-export type ConnectionStatus = {
+export interface ConnectionStatus {
   isConnected: boolean
   address: string | null
-  network: VeChainNetwork
+  network: 'testnet'  // We only use testnet
+}
+
+// Add collection types
+export interface NFTCollection {
+  address: string
+  name: string
+  symbol: string
+  totalSupply: number
 }
 
 // Make this a module

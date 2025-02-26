@@ -74,14 +74,15 @@ export default function TestPage() {
       )
       
       // Deploy contract
-      const txResponse = await connex.vendor.sign('tx', [{
+      const deployTx = await connex.vendor.sign('tx', [{
+        to: null,  // Required for contract creation
         value: '0',
-        data: TEST_NFT_BYTECODE + params.slice(2), // Remove '0x' prefix
+        data: TEST_NFT_BYTECODE + params.slice(2),
         gas: 2000000
       }]).request()
       
       setStatus('Waiting for deployment...')
-      const receipt = await connex.thor.transaction(txResponse.txid).getReceipt()
+      const receipt = await connex.thor.transaction(deployTx.txid).getReceipt()
       
       // Save collection
       const collection = {
@@ -109,7 +110,7 @@ export default function TestPage() {
       
       // Send mint transaction
       const txResponse = await connex.vendor.sign('tx', [{
-        to: collectionAddress,
+        to: collectionAddress,  // Specify contract address for minting
         value: '0',
         data: data,
         gas: 1000000

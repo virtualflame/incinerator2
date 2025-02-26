@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { vechain } from '../lib/vechain/connection'
 import { TEST_NFT_BYTECODE, TEST_NFT_ABI } from '../lib/contracts/bytecode'
+import { ethers } from 'ethers'
 
 export default function DeployPage() {
   const [status, setStatus] = useState('')
@@ -13,28 +14,29 @@ export default function DeployPage() {
       // Connect to VeWorld
       await vechain.connect()
       
-      // Deploy using VeWorld
-      const connex = new window.Connex({
-        node: process.env.NEXT_PUBLIC_VECHAIN_NODE,
-        network: 'test'
-      })
+      // Get connex from VeWorld
+      const connex = window.connex
+      if (!connex) {
+        throw new Error("VeWorld not connected")
+      }
 
       // Create the constructor data
-      const constructorData = web3.eth.abi.encodeParameters(
-        ['string', 'string'],
-        [name, symbol]
+      const constructorData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['string', 'string', 'address'],
+        [name, symbol, await vechain.getAddress()]
       )
 
       const deployTx = await connex.vendor.sign('tx', [{
-        data: TEST_NFT_BYTECODE + constructorData.slice(2),
+        to: null,  // Required for contract creation
         value: '0',
+        data: TEST_NFT_BYTECODE + constructorData.slice(2),
         gas: 2000000
-      }])
+      }]).request()
 
       setStatus(`Deployed ${name}: ${deployTx.txid}`)
       setDeployedAddresses(prev => [...prev, deployTx.txid])
-    } catch (error) {
-      setStatus(`Error: ${error.message}`)
+    } catch (error: any) {
+      setStatus(`Error: ${error?.message || 'Unknown error'}`)
     }
   }
 

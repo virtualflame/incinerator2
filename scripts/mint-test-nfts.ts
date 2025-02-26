@@ -17,7 +17,7 @@ async function main() {
     
     // Mint 100 NFTs
     for (let i = 0; i < 100; i++) {
-      const tx = await collection.mint();
+      const tx = await collection.batchMint(10);
       await tx.wait();
       console.log(`Minted NFT #${i}`);
     }

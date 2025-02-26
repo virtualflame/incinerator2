@@ -19,8 +19,17 @@
       }
     ],
     "paths": {
-      "@/*": ["./app/*"]
-    }
+      "@/*": ["./*"],
+      "@/lib/*": ["lib/*"],
+      "@/components/*": ["components/*"],
+      "@/hooks/*": ["hooks/*"]
+    },
+    "baseUrl": ".",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./app/lib/contracts/types",
+      "./app/lib/vechain/types"
+    ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

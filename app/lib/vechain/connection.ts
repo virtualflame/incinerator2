@@ -68,6 +68,12 @@ export class VeChainConnection {
   public getStatus(): ConnectionStatus {
     return this.status
   }
+
+  async getAddress(): Promise<string> {
+    const status = await this.connect()
+    if (!status.address) throw new Error('No address available')
+    return status.address
+  }
 }
 
 // Export a single instance

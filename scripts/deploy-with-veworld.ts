@@ -1,13 +1,12 @@
-import { Connex } from '@vechain/connex';
+import { artifacts } from 'hardhat';
 
 async function main() {
-  const connex = new Connex({
-    node: 'https://testnet.veblocks.net',
-    network: 'test'
-  });
-
-  // This will prompt VeWorld for approval
-  const deployTx = await connex.vendor.sign('tx', [{
-    // deployment transaction details
-  }]);
+  const TestNFT = await artifacts.readArtifact("TestNFTCollection");
+  
+  const deployTx = await window.connex.vendor.sign('tx', [{
+    to: null,
+    value: '0',
+    data: TestNFT.bytecode,
+    gas: 2000000
+  }]).request();
 } 

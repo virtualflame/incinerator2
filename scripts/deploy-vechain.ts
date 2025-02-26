@@ -18,18 +18,20 @@ async function main() {
 
   for (const [name, symbol] of collections) {
     // Deploy using VeWorld
-    const connex = new window.Connex({
-      node: process.env.NEXT_PUBLIC_VECHAIN_NODE,
-      network: 'test'
-    });
+    const connex = window.connex;
+    if (!connex) {
+      throw new Error("VeWorld not connected");
+    }
 
     // Create deployment transaction
-    const deployTx = await connex.vendor.sign('tx', [{
-      data: TestNFT.bytecode,
+    const signedTx = await connex.vendor.sign('tx', [{
+      to: null,
       value: '0',
+      data: TestNFT.bytecode,
       gas: 2000000
     }]);
 
+    const deployTx = await signedTx.request();
     console.log(`${name} deployment transaction:`, deployTx.txid);
   }
 }

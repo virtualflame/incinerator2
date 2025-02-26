@@ -1,8 +1,9 @@
-// This will be filled after contract compilation
-export const TEST_NFT_BYTECODE = ''
+// Import the artifact as a default import
+import artifact from '../../artifacts/contracts/TestNFTCollection.sol/TestNFTCollection.json'
 
-// Empty ABI for now
-export const TEST_NFT_ABI = []
+// Export the bytecode and ABI from the artifact
+export const TEST_NFT_BYTECODE = artifact.bytecode
+export const TEST_NFT_ABI = artifact.abi
 
-// We'll update these after deploying the first collection
+// We'll update this after deploying the first collection
 export const TEST_NFT_ADDRESS = '' 

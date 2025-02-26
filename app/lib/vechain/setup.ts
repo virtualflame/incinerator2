@@ -10,17 +10,11 @@ export const TESTNET_CONFIG = {
 
 // Check if we're on testnet
 export const isTestnet = () => {
-  return process.env.NEXT_PUBLIC_VECHAIN_NETWORK === 'testnet'
+  return process.env.NEXT_PUBLIC_NETWORK === 'testnet'
 }
 
 // Initialize Connex for testnet
 export const initTestnet = () => {
   if (typeof window === 'undefined') return null
-  
-  try {
-    return window.connex
-  } catch (error) {
-    console.error('Failed to initialize testnet:', error)
-    return null
-  }
+  return window.connex || null
 } 

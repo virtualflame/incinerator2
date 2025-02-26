@@ -1,10 +1,42 @@
 // Declare global VeChain types
 declare global {
   interface Window {
-    connex: any;
-    ethers: any;
-    vechain: any;
-    thor: any;        // Sync2 wallet
+    readonly connex: {
+      thor: {
+        transaction(txid: string): {
+          getReceipt(): Promise<{
+            outputs: Array<{
+              contractAddress: string;
+            }>;
+          }>;
+        };
+        account(addr: string): {
+          get(): Promise<{
+            balance: string;
+            energy: string;
+          }>;
+          method(abi: any): {
+            call(addr: string): Promise<{
+              decoded: any[];
+            }>;
+          };
+        };
+      };
+      vendor: {
+        sign(type: 'tx', clauses: Array<{
+          to: string | null;
+          value: string;
+          data: string;
+          gas?: number;
+        }>): {
+          request(): Promise<{
+            txid: string;
+          }>;
+        };
+      };
+    };
+    readonly vechain: any;
+    readonly ethers: any;
   }
 }
 

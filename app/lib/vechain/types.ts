@@ -3,6 +3,9 @@ declare global {
   interface Window {
     readonly connex: {
       thor: {
+        genesis: {
+          id: string;
+        };
         transaction(txid: string): {
           getReceipt(): Promise<{
             outputs: Array<{
@@ -14,6 +17,7 @@ declare global {
           get(): Promise<{
             balance: string;
             energy: string;
+            code?: string;
           }>;
           method(abi: any): {
             call(addr: string): Promise<{

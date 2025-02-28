@@ -5,39 +5,45 @@ import { vechain } from '../lib/vechain/connection'
 import { TEST_NFT_BYTECODE, TEST_NFT_ABI } from '../lib/contracts/bytecode'
 import { ethers } from 'ethers'
 
+const TEST_COLLECTIONS = [
+  { name: "TestCollection1", symbol: "TEST1" },
+  { name: "TestCollection2", symbol: "TEST2" },
+  { name: "TestCollection3", symbol: "TEST3" }
+]
+
 export default function DeployPage() {
   const [status, setStatus] = useState('')
   const [deployedAddresses, setDeployedAddresses] = useState<string[]>([])
+  const [isDeploying, setIsDeploying] = useState(false)
 
   const deployCollection = async (name: string, symbol: string) => {
     try {
-      // Connect to VeWorld
-      await vechain.connect()
+      setIsDeploying(true)
+      setStatus(`Deploying ${name}...`)
       
-      // Get connex from VeWorld
-      const connex = window.connex
-      if (!connex) {
-        throw new Error("VeWorld not connected")
-      }
-
-      // Create the constructor data
-      const constructorData = ethers.AbiCoder.defaultAbiCoder().encode(
-        ['string', 'string', 'address'],
-        [name, symbol, await vechain.getAddress()]
+      await vechain.connect()
+      const address = await vechain.deployContract(
+        TEST_NFT_BYTECODE,
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['string', 'string', 'address'],
+          [name, symbol, await vechain.getAddress()]
+        )
       )
-
-      const deployTx = await connex.vendor.sign('tx', [{
-        to: null,  // Required for contract creation
-        value: '0',
-        data: TEST_NFT_BYTECODE + constructorData.slice(2),
-        gas: 2000000
-      }]).request()
-
-      setStatus(`Deployed ${name}: ${deployTx.txid}`)
-      setDeployedAddresses(prev => [...prev, deployTx.txid])
+      
+      setStatus(`${name} deployed to ${address}`)
+      setDeployedAddresses(prev => [...prev, address])
     } catch (error: any) {
       setStatus(`Error: ${error?.message || 'Unknown error'}`)
+    } finally {
+      setIsDeploying(false)
     }
+  }
+
+  const deployAllCollections = async () => {
+    for (const collection of TEST_COLLECTIONS) {
+      await deployCollection(collection.name, collection.symbol)
+    }
+    setStatus('All collections deployed!')
   }
 
   return (
@@ -46,11 +52,23 @@ export default function DeployPage() {
       
       <div className="space-y-4">
         <button 
-          className="px-4 py-2 bg-blue-500 text-white rounded"
-          onClick={() => deployCollection("TestCollection1", "TEST1")}
+          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+          onClick={deployAllCollections}
+          disabled={isDeploying}
         >
-          Deploy Collection 1
+          Deploy All Collections
         </button>
+
+        {TEST_COLLECTIONS.map((collection, i) => (
+          <button
+            key={i}
+            className="block px-4 py-2 bg-purple-500 text-white rounded disabled:opacity-50"
+            onClick={() => deployCollection(collection.name, collection.symbol)}
+            disabled={isDeploying}
+          >
+            Deploy {collection.name}
+          </button>
+        ))}
 
         <div className="mt-4">
           <h2 className="font-bold">Deployment Status:</h2>

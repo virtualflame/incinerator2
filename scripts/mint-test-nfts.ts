@@ -6,8 +6,6 @@ async function main() {
     "0x...", // TestCollection1 address
     "0x...", // TestCollection2 address
     "0x...", // TestCollection3 address
-    "0x...", // TestCollection4 address
-    "0x..."  // TestCollection5 address
   ];
 
   for (const address of deployedCollections) {
@@ -15,8 +13,8 @@ async function main() {
     
     const collection = await ethers.getContractAt("TestNFTCollection", address);
     
-    // Mint 100 NFTs
-    for (let i = 0; i < 100; i++) {
+    // Mint 10 NFTs
+    for (let i = 0; i < 10; i++) {
       const tx = await collection.batchMint(10);
       await tx.wait();
       console.log(`Minted NFT #${i}`);

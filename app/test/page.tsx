@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { vechain } from '../lib/vechain/connection'
 import { TEST_NFT_BYTECODE, TEST_NFT_ABI } from '../lib/contracts/bytecode'
 import { ethers } from 'ethers'
+import { NFTCollection } from '../lib/vechain/types'
 
 interface Collection {
   address: string
@@ -21,7 +22,7 @@ export default function TestPage() {
   const [address, setAddress] = useState('')
   const [status, setStatus] = useState('')
   const [balance, setBalance] = useState({ vet: '0', vtho: '0' })
-  const [collections, setCollections] = useState<Collection[]>([])
+  const [collections, setCollections] = useState<NFTCollection[]>([])
   
   // Add collection form
   const [newCollection, setNewCollection] = useState({
@@ -32,6 +33,7 @@ export default function TestPage() {
   // Add these states
   const [nftBalance, setNftBalance] = useState<{[key: string]: number}>({})
   const [nftCount, setNftCount] = useState(10)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Connect wallet
   const connectWallet = async () => {
@@ -90,7 +92,7 @@ export default function TestPage() {
         name: newCollection.name,
         symbol: newCollection.symbol,
         totalSupply: 100
-      }
+      } as NFTCollection
       
       setCollections(prev => [...prev, collection])
       setStatus('Collection deployed!')
@@ -100,33 +102,40 @@ export default function TestPage() {
     }
   }
 
-  const mintNFT = async (collectionAddress: string) => {
+  const mintNFTs = async (collection: NFTCollection) => {
     try {
-      setStatus('Minting NFT...')
-      
+      setIsLoading(true)
+      setStatus(`Minting NFTs for ${collection.name}...`)
+
+      await vechain.connect()
       const connex = window.connex
+      if (!connex) throw new Error('VeWorld not connected')
+
+      // Create contract interface
       const abi = new ethers.Interface(TEST_NFT_ABI)
-      const data = abi.encodeFunctionData('mint', [])
-      
+      const mintData = abi.encodeFunctionData('batchMint', [10])
+
       // Send mint transaction
-      const txResponse = await connex.vendor.sign('tx', [{
-        to: collectionAddress,  // Specify contract address for minting
+      const tx = await connex.vendor.sign('tx', [{
+        to: collection.address,
         value: '0',
-        data: data,
-        gas: 1000000
+        data: mintData,
+        gas: 2000000
       }]).request()
+
+      setStatus(`Waiting for mint confirmation...`)
+      const receipt = await connex.thor.transaction(tx.txid).getReceipt()
       
-      setStatus('Waiting for mint...')
-      await connex.thor.transaction(txResponse.txid).getReceipt()
-      setStatus('NFT Minted!')
-    } catch (error) {
-      const err = error as ErrorWithMessage
-      setStatus(`Error: ${err.message}`)
+      setStatus(`Successfully minted 10 NFTs for ${collection.name}`)
+    } catch (error: any) {
+      setStatus(`Error: ${error?.message || 'Unknown error'}`)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   // Add this function
-  const getCollectionInfo = async (collection: Collection) => {
+  const getCollectionInfo = async (collection: NFTCollection) => {
     try {
       const connex = window.connex
       const abi = new ethers.Interface(TEST_NFT_ABI)
@@ -162,6 +171,13 @@ export default function TestPage() {
       collections.forEach(getCollectionInfo)
     }
   }, [address, collections])
+
+  // Save collections to localStorage
+  useEffect(() => {
+    if (collections.length > 0) {
+      localStorage.setItem('testCollections', JSON.stringify(collections))
+    }
+  }, [collections])
 
   return (
     <div className="container mx-auto p-8">
@@ -260,11 +276,12 @@ export default function TestPage() {
               <p className="font-mono text-xs mt-2">{collection.address}</p>
               <p className="text-sm mt-2">Your NFTs: {nftBalance[collection.address] || 0}</p>
               
-              <button 
-                onClick={() => mintNFT(collection.address)}
-                className="mt-3 px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+              <button
+                className="mt-3 px-3 py-1 bg-green-500 text-white text-sm rounded disabled:opacity-50"
+                onClick={() => mintNFTs(collection)}
+                disabled={isLoading}
               >
-                Mint NFT
+                Mint 10 NFTs
               </button>
             </div>
           ))}

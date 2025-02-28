@@ -1,12 +1,19 @@
 // Import our types and utilities
 import { ConnectionStatus } from './types'
 
+// Add testnet configuration
+const TESTNET_CONFIG = {
+  node: 'https://testnet.veblocks.net',
+  network: 'test',
+  genesis: '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127'
+}
+
 // Simplified connection class
 export class VeChainConnection {
   private status: ConnectionStatus = {
     isConnected: false,
     address: null,
-    network: 'testnet'
+    network: 'testnet'  // Default to testnet
   }
 
   // Check if VeWorld is available
@@ -73,6 +80,34 @@ export class VeChainConnection {
     const status = await this.connect()
     if (!status.address) throw new Error('No address available')
     return status.address
+  }
+
+  public async verifyTestnet(): Promise<boolean> {
+    if (!window.connex) return false;
+    return window.connex.thor.genesis.id === TESTNET_CONFIG.genesis;
+  }
+
+  public async deployContract(bytecode: string, constructorData: string): Promise<string> {
+    const connex = window.connex;
+    if (!connex) throw new Error('VeWorld not connected');
+
+    if (!await this.verifyTestnet()) {
+      throw new Error('Please connect to VeChain testnet');
+    }
+
+    const deployTx = await connex.vendor.sign('tx', [{
+      to: null,
+      value: '0',
+      data: bytecode + constructorData.slice(2),
+      gas: 2000000
+    }]).request();
+
+    const receipt = await connex.thor.transaction(deployTx.txid).getReceipt();
+    if (!receipt.outputs?.[0]?.contractAddress) {
+      throw new Error('Deployment failed');
+    }
+
+    return receipt.outputs[0].contractAddress;
   }
 }
 

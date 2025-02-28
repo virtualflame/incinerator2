@@ -1,7 +1,7 @@
 declare module "*.json" {
-  const value: {
+  const content: {
     abi: any[];
     bytecode: string;
   };
-  export default value;
+  export = content;
 } 

@@ -1,4 +1,5 @@
 import { artifacts } from 'hardhat';
+import { ethers } from 'ethers';
 
 async function main() {
   const TestNFT = await artifacts.readArtifact("TestNFTCollection");
@@ -16,10 +17,26 @@ async function main() {
 
   try {
     console.log('Deploying contract...');
+    
+    // Get deployer address
+    const address = await connex.vendor.sign('cert', {
+      purpose: 'identification',
+      payload: {
+        type: 'text',
+        content: 'Please sign to verify your address'
+      }
+    }).request();
+
+    // Encode constructor parameters
+    const params = ethers.AbiCoder.defaultAbiCoder().encode(
+      ['string', 'string', 'address'],
+      ['TestNFT', 'TEST', address.annex.signer]
+    );
+
     const signedTx = await connex.vendor.sign('tx', [{
       to: null,
       value: '0',
-      data: TestNFT.bytecode,
+      data: TestNFT.bytecode + params.slice(2),
       gas: 2000000
     }]);
 

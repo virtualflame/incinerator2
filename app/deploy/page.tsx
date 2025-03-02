@@ -87,7 +87,7 @@ export default function DeployPage() {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4" role="main" aria-label="Deploy Collections">
       <h1 className="text-2xl font-bold mb-4">Deploy Test Collections</h1>
       
       <div className="space-y-4">
@@ -95,6 +95,8 @@ export default function DeployPage() {
           <button
             className="px-4 py-2 bg-blue-500 text-white rounded"
             onClick={connectWallet}
+            aria-label="Connect VeWorld Wallet"
+            title="Connect your VeWorld wallet"
           >
             Connect Wallet
           </button>
@@ -102,7 +104,11 @@ export default function DeployPage() {
 
         {isConnected && (
           <>
-            <div className="p-4 bg-green-100 rounded">
+            <div 
+              className="p-4 bg-green-100 rounded" 
+              role="status" 
+              aria-label="Wallet Status"
+            >
               <p>✓ Connected to VeChain Testnet</p>
               <p>Balance: {ethers.formatEther(balance.vet)} TEST-VET</p>
               <p>Energy: {ethers.formatEther(balance.vtho)} TEST-VTHO</p>
@@ -114,6 +120,8 @@ export default function DeployPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline"
+                    aria-label="VeChain Testnet Faucet"
+                    title="Get testnet tokens"
                   >
                     VeChain Testnet Faucet
                   </a>
@@ -125,13 +133,15 @@ export default function DeployPage() {
               className="px-4 py-2 bg-purple-500 text-white rounded disabled:opacity-50"
               onClick={() => deployCollection('TestNFT', 'TEST')}
               disabled={isDeploying || !isTestnet}
+              aria-label="Deploy Test NFT Collection"
+              title={isDeploying ? 'Deployment in progress...' : 'Deploy a test NFT collection'}
             >
               Deploy Test Collection
             </button>
           </>
         )}
 
-        <div className="mt-4">
+        <div className="mt-4" role="alert" aria-live="polite">
           <h2 className="font-bold">Status:</h2>
           <pre className="bg-gray-100 p-2 rounded">{status}</pre>
         </div>

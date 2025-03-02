@@ -50,6 +50,10 @@ export class VeChainConnection {
   // Connect to VeWorld
   public async connect(): Promise<ConnectionStatus> {
     try {
+      if (!this.isWalletAvailable()) {
+        throw new Error('VeWorld wallet not found')
+      }
+
       await this.waitForVeWorld()
       
       // Now we can safely use window.connex

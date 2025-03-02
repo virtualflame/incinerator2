@@ -13,9 +13,9 @@ export default function TestPage() {
     b3tr: '0'  // Add B3TR balance
   })
 
-  // Status dot component
+  // Status dot component with black text
   const StatusDot = ({ connected }: { connected: boolean }) => (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 text-black">
       <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
       <span>{connected ? 'Connected' : 'Not Connected'}</span>
     </div>
@@ -24,19 +24,25 @@ export default function TestPage() {
   const connectWallet = async () => {
     try {
       setStatus('Connecting to VeWorld...')
+      
+      // Check if VeWorld is available
+      if (!vechain.isWalletAvailable()) {
+        setStatus('VeWorld wallet not found. Please install VeWorld extension.')
+        return
+      }
+
       const status = await vechain.connect()
       
       if (status.isConnected && status.address) {
         setIsConnected(true)
         setStatus('Connected to testnet!')
         
-        // Get balances
         try {
           const bal = await vechain.getBalance(status.address)
           setBalance({
             vet: bal.vet,
             vtho: bal.vtho,
-            b3tr: '0' // TODO: Add B3TR balance check
+            b3tr: '0'
           })
         } catch (error) {
           console.log('Balance check failed:', error)
@@ -51,13 +57,13 @@ export default function TestPage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">VeChain Testnet Environment</h1>
+    <div className="p-4 max-w-2xl mx-auto text-black">
+      <h1 className="text-2xl font-bold mb-6 text-black">VeChain Testnet Environment</h1>
       
       <div className="space-y-6">
         {/* Connection Status */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold mb-2">Connection Status</h2>
+          <h2 className="text-lg font-semibold mb-2 text-black">Connection Status</h2>
           <StatusDot connected={isConnected} />
         </div>
 
@@ -74,8 +80,8 @@ export default function TestPage() {
         {/* Balances */}
         {isConnected && (
           <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="text-lg font-semibold mb-3">Wallet Balances</h2>
-            <div className="space-y-2">
+            <h2 className="text-lg font-semibold mb-3 text-black">Wallet Balances</h2>
+            <div className="space-y-2 text-black">
               <div className="flex justify-between items-center">
                 <span>VET:</span>
                 <span className="font-mono">{ethers.formatEther(balance.vet)} TEST-VET</span>
@@ -94,8 +100,8 @@ export default function TestPage() {
 
         {/* Status Messages */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold mb-2">Status</h2>
-          <pre className="bg-gray-50 p-2 rounded text-sm">{status}</pre>
+          <h2 className="text-lg font-semibold mb-2 text-black">Status</h2>
+          <pre className="bg-gray-50 p-2 rounded text-sm text-black">{status}</pre>
         </div>
       </div>
     </div>

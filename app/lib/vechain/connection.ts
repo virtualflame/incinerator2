@@ -24,12 +24,11 @@ export class VeChainConnection {
   // Check for VeWorld extension
   public isWalletAvailable(): boolean {
     try {
-      // Check for iFrame injection
-      const hasVeWorld = !!(
-        window?.document?.querySelector('iframe[id^="vechain-"]') ||
-        window?.vechain
+      // Check for both iFrame and Connex
+      return !!(
+        window?.document?.querySelector('iframe[id^="vechain-"]') &&
+        typeof window?.connex !== 'undefined'
       )
-      return hasVeWorld
     } catch {
       return false
     }
@@ -37,47 +36,57 @@ export class VeChainConnection {
 
   private async waitForVeWorld(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // First check for iFrame
-      const checkForConnex = () => {
+      let attempts = 0
+      const maxAttempts = 50 // 5 seconds total
+
+      const checkConnex = () => {
+        attempts++
+
+        // Check if Connex is ready
         if (window?.connex?.thor && window?.connex?.vendor) {
-          clearInterval(connexInterval)
+          clearInterval(interval)
           resolve()
-          return true
+          return
         }
-        return false
+
+        // Give up after max attempts
+        if (attempts >= maxAttempts) {
+          clearInterval(interval)
+          if (!window?.connex) {
+            reject(new Error('VeWorld not found. Please install the extension.'))
+          } else {
+            reject(new Error('Please open and unlock your VeWorld wallet.'))
+          }
+        }
       }
 
-      // Check immediately
-      if (checkForConnex()) return
+      // Check every 100ms
+      const interval = setInterval(checkConnex, 100)
 
-      // Set up polling for Connex
-      const connexInterval = setInterval(() => {
-        checkForConnex()
-      }, 100)
-
-      // Timeout after 3 seconds
-      setTimeout(() => {
-        clearInterval(connexInterval)
-        if (!window?.connex?.thor) {
-          reject(new Error('Please unlock your VeWorld wallet'))
-        }
-      }, 3000)
+      // Initial check
+      checkConnex()
     })
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      // Wait for Connex
+      // Ensure Connex is ready
       await this.waitForVeWorld()
 
-      // Verify testnet
-      const genesis = window?.connex?.thor?.genesis?.id
+      // Get Connex instance
+      const connex = window.connex
+      if (!connex?.thor || !connex?.vendor) {
+        throw new Error('VeWorld not properly initialized')
+      }
+
+      // Check network
+      const genesis = connex.thor.genesis.id
       if (genesis !== '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127') {
         throw new Error('Please switch to VeChain testnet in VeWorld')
       }
 
-      // Request connection
-      const cert = await window.connex.vendor.sign('cert', {
+      // Request wallet access
+      const cert = await connex.vendor.sign('cert', {
         purpose: 'identification',
         payload: {
           type: 'text',
@@ -89,6 +98,7 @@ export class VeChainConnection {
         throw new Error('Could not get wallet address')
       }
 
+      // Update status
       this.status = {
         isConnected: true,
         address: cert.annex.signer,
@@ -96,6 +106,7 @@ export class VeChainConnection {
       }
 
       return this.status
+
     } catch (error: any) {
       console.error('Connection error:', error)
       this.status = {

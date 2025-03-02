@@ -16,18 +16,27 @@ export class VeChainConnection {
     network: 'testnet'  // Default to testnet
   }
 
-  private async waitForConnex(): Promise<boolean> {
-    let attempts = 0
-    const maxAttempts = 20 // 10 seconds total
-    
-    while (attempts < maxAttempts) {
+  private async waitForConnex(timeoutMs = 10000): Promise<void> {
+    return new Promise((resolve, reject) => {
       if (typeof window !== 'undefined' && window.connex) {
-        return true
+        resolve()
+        return
       }
-      await new Promise(resolve => setTimeout(resolve, 500))
-      attempts++
-    }
-    return false
+
+      const startTime = Date.now()
+      const interval = setInterval(() => {
+        if (typeof window !== 'undefined' && window.connex) {
+          clearInterval(interval)
+          resolve()
+          return
+        }
+
+        if (Date.now() - startTime > timeoutMs) {
+          clearInterval(interval)
+          reject(new Error('VeWorld not found. Please install VeWorld extension.'))
+        }
+      }, 500)
+    })
   }
 
   // Check if VeWorld is available
@@ -39,11 +48,8 @@ export class VeChainConnection {
   // Connect to VeWorld
   public async connect(): Promise<ConnectionStatus> {
     try {
-      const hasConnex = await this.waitForConnex()
-      if (!hasConnex) {
-        throw new Error('VeWorld not found. Please install VeWorld extension.')
-      }
-
+      await this.waitForConnex()
+      
       // Now we can safely use window.connex
       const connex = window.connex
       
@@ -88,15 +94,16 @@ export class VeChainConnection {
     vet: string,
     vtho: string
   }> {
-    const hasConnex = await this.waitForConnex()
-    if (!hasConnex) {
-      throw new Error('VeWorld not connected')
-    }
-
-    const account = await window.connex.thor.account(address).get()
-    return {
-      vet: account.balance,
-      vtho: account.energy
+    try {
+      await this.waitForConnex()
+      const account = await window.connex.thor.account(address).get()
+      return {
+        vet: account.balance,
+        vtho: account.energy
+      }
+    } catch (error) {
+      console.error('Balance check failed:', error)
+      return { vet: '0', vtho: '0' }
     }
   }
 

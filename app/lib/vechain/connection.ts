@@ -36,7 +36,7 @@ export class VeChainConnection {
     }
 
     // Verify testnet
-    if (window.connex.thor.genesis.id !== '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127') {
+    if (window.connex.thor.genesis.id !== TESTNET_CONFIG.genesis) {
       throw new Error('Please connect to VeChain testnet')
     }
 
@@ -48,6 +48,10 @@ export class VeChainConnection {
         content: 'Connect to app'
       }
     }).request()
+
+    if (!cert.annex?.signer) {
+      throw new Error('Failed to get wallet address')
+    }
 
     return {
       isConnected: true,
@@ -83,20 +87,25 @@ export class VeChainConnection {
         content: 'Get address'
       }
     }).request()
+
+    if (!cert.annex?.signer) {
+      throw new Error('Failed to get wallet address')
+    }
+
     return cert.annex.signer
   }
 
   public async verifyTestnet(): Promise<boolean> {
-    if (!window.connex) return false;
-    return window.connex.thor.genesis.id === TESTNET_CONFIG.genesis;
+    if (!window.connex) return false
+    return window.connex.thor.genesis.id === TESTNET_CONFIG.genesis
   }
 
   public async deployContract(bytecode: string, constructorData: string): Promise<string> {
-    const connex = window.connex;
-    if (!connex) throw new Error('VeWorld not connected');
+    const connex = window.connex
+    if (!connex) throw new Error('VeWorld not connected')
 
     if (!await this.verifyTestnet()) {
-      throw new Error('Please connect to VeChain testnet');
+      throw new Error('Please connect to VeChain testnet')
     }
 
     const deployTx = await connex.vendor.sign('tx', [{
@@ -104,14 +113,18 @@ export class VeChainConnection {
       value: '0',
       data: bytecode + constructorData.slice(2),
       gas: 2000000
-    }]).request();
+    }]).request()
 
-    const receipt = await connex.thor.transaction(deployTx.txid).getReceipt();
-    if (!receipt.outputs?.[0]?.contractAddress) {
-      throw new Error('Deployment failed');
+    if (!deployTx.txid) {
+      throw new Error('Failed to get transaction ID')
     }
 
-    return receipt.outputs[0].contractAddress;
+    const receipt = await connex.thor.transaction(deployTx.txid).getReceipt()
+    if (!receipt.outputs?.[0]?.contractAddress) {
+      throw new Error('Deployment failed')
+    }
+
+    return receipt.outputs[0].contractAddress
   }
 }
 

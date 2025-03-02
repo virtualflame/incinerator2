@@ -24,31 +24,35 @@ export class VeChainConnection {
 
   // Connect to VeWorld
   public async connect(): Promise<ConnectionStatus> {
-    try {
-      if (!this.isWalletAvailable()) {
-        throw new Error('VeWorld wallet not found. Please install VeWorld extension.')
+    // Wait for window.connex to be available
+    let attempts = 0
+    while (!window.connex && attempts < 10) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+      attempts++
+    }
+
+    if (!window.connex) {
+      throw new Error('VeWorld not found. Please install VeWorld extension.')
+    }
+
+    // Verify testnet
+    if (window.connex.thor.genesis.id !== '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127') {
+      throw new Error('Please connect to VeChain testnet')
+    }
+
+    // Get address
+    const cert = await window.connex.vendor.sign('cert', {
+      purpose: 'identification',
+      payload: {
+        type: 'text',
+        content: 'Connect to app'
       }
+    }).request()
 
-      // Request account access
-      const accounts = await window.vechain.request({
-        method: 'eth_requestAccounts'
-      })
-
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts found')
-      }
-
-      this.status = {
-        isConnected: true,
-        address: accounts[0],
-        network: 'testnet'
-      }
-
-      return this.status
-
-    } catch (error) {
-      console.error('Wallet connection error:', error)
-      return this.status
+    return {
+      isConnected: true,
+      address: cert.annex.signer,
+      network: 'testnet'
     }
   }
 
@@ -57,17 +61,12 @@ export class VeChainConnection {
     vet: string,
     vtho: string
   }> {
-    try {
-      const connex = window.connex
-      const account = await connex.thor.account(address).get()
-      
-      return {
-        vet: (parseInt(account.balance) / 1e18).toFixed(2),
-        vtho: (parseInt(account.energy) / 1e18).toFixed(2)
-      }
-    } catch (error) {
-      console.error('Balance check failed:', error)
-      return { vet: '0', vtho: '0' }
+    if (!window.connex) throw new Error('Not connected')
+    
+    const account = await window.connex.thor.account(address).get()
+    return {
+      vet: account.balance,
+      vtho: account.energy
     }
   }
 
@@ -77,9 +76,14 @@ export class VeChainConnection {
   }
 
   async getAddress(): Promise<string> {
-    const status = await this.connect()
-    if (!status.address) throw new Error('No address available')
-    return status.address
+    const cert = await window.connex.vendor.sign('cert', {
+      purpose: 'identification',
+      payload: {
+        type: 'text',
+        content: 'Get address'
+      }
+    }).request()
+    return cert.annex.signer
   }
 
   public async verifyTestnet(): Promise<boolean> {

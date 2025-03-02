@@ -21,6 +21,17 @@ export class VeChainConnection {
     network: 'testnet'
   }
 
+  // Add connection event handlers
+  private connectionListeners: (() => void)[] = []
+
+  public onConnect(callback: () => void) {
+    this.connectionListeners.push(callback)
+  }
+
+  private notifyConnected() {
+    this.connectionListeners.forEach(callback => callback())
+  }
+
   // Simplified check
   public isWalletAvailable(): boolean {
     return typeof window !== 'undefined' && !!window.vechain
@@ -28,22 +39,31 @@ export class VeChainConnection {
 
   private async waitForVeWorld(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Check for immediate availability
       if (window.connex?.thor && window.connex?.vendor) {
         resolve()
         return
       }
 
-      // Force wallet popup by requesting connection
       if (window.vechain) {
         try {
+          // Listen for both connect and chainChanged events
           window.vechain.on('connect', () => {
             if (window.connex?.thor) {
+              this.notifyConnected()
               resolve()
             }
           })
+
+          window.vechain.on('chainChanged', () => {
+            // Refresh connection when chain changes
+            this.verifyTestnet().then(isTestnet => {
+              if (!isTestnet) {
+                this.disconnect()
+              }
+            })
+          })
           
-          // This triggers the VeWorld popup
+          // Trigger popup
           window.vechain.enable()
         } catch (error) {
           reject(new Error('Please unlock VeWorld wallet'))
@@ -52,7 +72,6 @@ export class VeChainConnection {
         reject(new Error('VeWorld not found'))
       }
 
-      // Timeout after 30 seconds
       setTimeout(() => {
         reject(new Error('Connection timeout. Please try again.'))
       }, 30000)
@@ -61,21 +80,19 @@ export class VeChainConnection {
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      // This will trigger the VeWorld popup
       await this.waitForVeWorld()
 
-      // After popup, check Connex
       if (!window.connex?.thor || !window.connex?.vendor) {
         throw new Error('Please accept the connection request in VeWorld')
       }
 
       // Verify testnet
-      const genesis = window.connex.thor.genesis.id
-      if (genesis !== '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127') {
+      const isTestnet = await this.verifyTestnet()
+      if (!isTestnet) {
         throw new Error('Please switch to VeChain testnet in VeWorld')
       }
 
-      // Get user's address
+      // Get address
       const cert = await window.connex.vendor.sign('cert', {
         purpose: 'identification',
         payload: {
@@ -94,16 +111,21 @@ export class VeChainConnection {
         network: 'testnet'
       }
 
+      this.notifyConnected()
       return this.status
 
     } catch (error: any) {
       console.error('Connection error:', error)
-      this.status = {
-        isConnected: false,
-        address: null,
-        network: 'testnet'
-      }
+      this.disconnect()
       throw error
+    }
+  }
+
+  public disconnect() {
+    this.status = {
+      isConnected: false,
+      address: null,
+      network: 'testnet'
     }
   }
 

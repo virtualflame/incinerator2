@@ -43,6 +43,26 @@ export default function TestPage() {
     }
   }, [])
 
+  useEffect(() => {
+    // Listen for connection events
+    vechain.onConnect(async () => {
+      setIsConnected(true)
+      const status = vechain.getStatus()
+      if (status.address) {
+        try {
+          const bal = await vechain.getBalance(status.address)
+          setBalance({
+            vet: bal.vet,
+            vtho: bal.vtho,
+            b3tr: '0'
+          })
+        } catch (error) {
+          console.error('Balance check failed:', error)
+        }
+      }
+    })
+  }, [])
+
   const connectWallet = async () => {
     try {
       setStatus('Connecting to VeWorld...')

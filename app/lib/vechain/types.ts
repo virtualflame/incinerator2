@@ -19,22 +19,15 @@ declare global {
             energy: string;
             code?: string;
           }>;
-          method(abi: any): {
-            call(addr: string): Promise<{
-              decoded: any[];
-            }>;
-          };
         };
       };
       vendor: {
-        sign(type: 'tx', clauses: Array<{
-          to: string | null;
-          value: string;
-          data: string;
-          gas?: number;
-        }>): {
+        sign(type: 'tx' | 'cert', msg: any): {
           request(): Promise<{
-            txid: string;
+            annex?: {
+              signer: string;
+            };
+            txid?: string;
           }>;
         };
       };

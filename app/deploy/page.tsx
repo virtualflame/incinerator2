@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { vechain } from '../lib/vechain/connection'
 import { TEST_NFT_BYTECODE, TEST_NFT_ABI } from '../lib/contracts/bytecode'
 import { ethers } from 'ethers'
@@ -13,15 +13,49 @@ const TEST_COLLECTIONS = [
 
 export default function DeployPage() {
   const [status, setStatus] = useState('')
-  const [deployedAddresses, setDeployedAddresses] = useState<string[]>([])
+  const [isConnected, setIsConnected] = useState(false)
   const [isDeploying, setIsDeploying] = useState(false)
 
+  // Check connection on load
+  useEffect(() => {
+    checkConnection()
+  }, [])
+
+  const checkConnection = async () => {
+    try {
+      const status = await vechain.connect()
+      setIsConnected(status.isConnected)
+    } catch (error) {
+      console.error('Connection check failed:', error)
+    }
+  }
+
+  const connectWallet = async () => {
+    try {
+      setStatus('Connecting to VeWorld...')
+      const status = await vechain.connect()
+      
+      if (status.isConnected) {
+        setIsConnected(true)
+        setStatus('Connected!')
+      } else {
+        setStatus('Connection failed')
+      }
+    } catch (error: any) {
+      setStatus(`Error: ${error.message || 'Connection failed'}`)
+    }
+  }
+
   const deployCollection = async (name: string, symbol: string) => {
+    if (!isConnected) {
+      setStatus('Please connect wallet first')
+      return
+    }
+
     try {
       setIsDeploying(true)
       setStatus(`Deploying ${name}...`)
       
-      await vechain.connect()
       const address = await vechain.deployContract(
         TEST_NFT_BYTECODE,
         ethers.AbiCoder.defaultAbiCoder().encode(
@@ -30,10 +64,9 @@ export default function DeployPage() {
         )
       )
       
-      setStatus(`${name} deployed to ${address}`)
-      setDeployedAddresses(prev => [...prev, address])
+      setStatus(`Deployed to ${address}`)
     } catch (error: any) {
-      setStatus(`Error: ${error?.message || 'Unknown error'}`)
+      setStatus(`Error: ${error.message || 'Deployment failed'}`)
     } finally {
       setIsDeploying(false)
     }
@@ -51,37 +84,28 @@ export default function DeployPage() {
       <h1 className="text-2xl font-bold mb-4">Deploy Test Collections</h1>
       
       <div className="space-y-4">
-        <button 
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-          onClick={deployAllCollections}
-          disabled={isDeploying}
-        >
-          Deploy All Collections
-        </button>
-
-        {TEST_COLLECTIONS.map((collection, i) => (
+        {!isConnected && (
           <button
-            key={i}
-            className="block px-4 py-2 bg-purple-500 text-white rounded disabled:opacity-50"
-            onClick={() => deployCollection(collection.name, collection.symbol)}
+            className="px-4 py-2 bg-blue-500 text-white rounded"
+            onClick={connectWallet}
+          >
+            Connect Wallet
+          </button>
+        )}
+
+        {isConnected && (
+          <button
+            className="px-4 py-2 bg-purple-500 text-white rounded disabled:opacity-50"
+            onClick={() => deployCollection('TestNFT', 'TEST')}
             disabled={isDeploying}
           >
-            Deploy {collection.name}
+            Deploy Test Collection
           </button>
-        ))}
+        )}
 
         <div className="mt-4">
-          <h2 className="font-bold">Deployment Status:</h2>
+          <h2 className="font-bold">Status:</h2>
           <pre className="bg-gray-100 p-2 rounded">{status}</pre>
-        </div>
-
-        <div className="mt-4">
-          <h2 className="font-bold">Deployed Collections:</h2>
-          <ul className="list-disc pl-4">
-            {deployedAddresses.map((addr, i) => (
-              <li key={i}>{addr}</li>
-            ))}
-          </ul>
         </div>
       </div>
     </div>

@@ -21,13 +21,26 @@ export default function TestPage() {
     </div>
   )
 
+  // Add wallet detection effect
+  useEffect(() => {
+    const checkWallet = async () => {
+      const hasWallet = vechain.isWalletAvailable()
+      if (!hasWallet) {
+        setStatus('Please install VeWorld wallet extension')
+      } else {
+        setStatus('VeWorld detected. Click connect to continue.')
+      }
+    }
+
+    checkWallet()
+  }, [])
+
   const connectWallet = async () => {
     try {
       setStatus('Connecting to VeWorld...')
       
-      // Check if VeWorld is available
       if (!vechain.isWalletAvailable()) {
-        setStatus('VeWorld wallet not found. Please install VeWorld extension.')
+        setStatus('VeWorld wallet not found. Please install the extension and refresh.')
         return
       }
 
@@ -51,7 +64,8 @@ export default function TestPage() {
         setStatus('Connection failed')
       }
     } catch (error: any) {
-      setStatus(`Error: ${error.message || 'Connection failed'}`)
+      console.error('Connection error:', error)
+      setStatus(`Error: ${error.message || 'Failed to connect to VeWorld'}`)
       setIsConnected(false)
     }
   }

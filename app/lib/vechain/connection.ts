@@ -21,37 +21,39 @@ export class VeChainConnection {
     network: 'testnet'  // Default to testnet
   }
 
-  // Improved wallet check based on VeChain Kit
+  // Improved wallet detection
   public isWalletAvailable(): boolean {
     if (typeof window === 'undefined') return false
-    return !!(window.connex?.thor && window.connex?.vendor)
+    // Check for both the extension and Connex object
+    return !!(window.vechain && (window.connex?.thor || window.connex?.vendor))
   }
 
   private async waitForVeWorld(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Check for full Connex initialization
-      if (window.connex?.thor && window.connex?.vendor) {
+      // Initial check
+      if (this.isWalletAvailable()) {
         resolve()
         return
       }
 
-      let attempts = 0
-      const interval = setInterval(() => {
-        attempts++
-        
-        // Check for complete Connex initialization
-        if (window.connex?.thor && window.connex?.vendor) {
-          clearInterval(interval)
+      // Listen for VeWorld injection
+      const checkForVeWorld = () => {
+        if (this.isWalletAvailable()) {
+          clearInterval(checkInterval)
           resolve()
-          return
         }
+      }
 
-        // Timeout after 20 attempts (10 seconds)
-        if (attempts > 20) {
-          clearInterval(interval)
-          reject(new Error('VeWorld wallet not detected. Please install the extension.'))
+      // Check every 500ms
+      const checkInterval = setInterval(checkForVeWorld, 500)
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval)
+        if (!this.isWalletAvailable()) {
+          reject(new Error('VeWorld wallet not found. Please check if it is installed and unlocked.'))
         }
-      }, 500)
+      }, 10000)
     })
   }
 

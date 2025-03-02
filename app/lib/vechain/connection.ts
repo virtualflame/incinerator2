@@ -21,15 +21,14 @@ export class VeChainConnection {
     network: 'testnet'
   }
 
-  // Add connection event handlers
-  private connectionListeners: (() => void)[] = []
+  private connectionListeners: ((status: ConnectionStatus) => void)[] = []
 
-  public onConnect(callback: () => void) {
+  public onConnect(callback: (status: ConnectionStatus) => void) {
     this.connectionListeners.push(callback)
   }
 
-  private notifyConnected() {
-    this.connectionListeners.forEach(callback => callback())
+  private notifyListeners() {
+    this.connectionListeners.forEach(callback => callback(this.status))
   }
 
   // Simplified check
@@ -49,7 +48,7 @@ export class VeChainConnection {
           // Listen for both connect and chainChanged events
           window.vechain.on('connect', () => {
             if (window.connex?.thor) {
-              this.notifyConnected()
+              this.notifyListeners()
               resolve()
             }
           })
@@ -80,16 +79,23 @@ export class VeChainConnection {
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      await this.waitForVeWorld()
-
-      if (!window.connex?.thor || !window.connex?.vendor) {
-        throw new Error('Please accept the connection request in VeWorld')
+      // Wait for VeWorld
+      if (!window.vechain) {
+        throw new Error('VeWorld not found')
       }
 
-      // Verify testnet
-      const isTestnet = await this.verifyTestnet()
-      if (!isTestnet) {
-        throw new Error('Please switch to VeChain testnet in VeWorld')
+      // Request connection
+      await window.vechain.enable()
+
+      // Wait for Connex
+      let attempts = 0
+      while (!window.connex?.thor && attempts < 50) {
+        await new Promise(r => setTimeout(r, 100))
+        attempts++
+      }
+
+      if (!window.connex?.thor) {
+        throw new Error('VeWorld connection failed')
       }
 
       // Get address
@@ -102,7 +108,7 @@ export class VeChainConnection {
       }).request()
 
       if (!cert?.annex?.signer) {
-        throw new Error('Could not get wallet address')
+        throw new Error('Failed to get wallet address')
       }
 
       this.status = {
@@ -111,12 +117,16 @@ export class VeChainConnection {
         network: 'testnet'
       }
 
-      this.notifyConnected()
+      this.notifyListeners()
       return this.status
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Connection error:', error)
-      this.disconnect()
+      this.status = {
+        isConnected: false,
+        address: null,
+        network: 'testnet'
+      }
       throw error
     }
   }
@@ -133,14 +143,19 @@ export class VeChainConnection {
     vet: string,
     vtho: string
   }> {
-    if (!window.connex?.thor) {
-      throw new Error('VeWorld not initialized')
-    }
+    try {
+      if (!window.connex?.thor) {
+        throw new Error('Not connected to VeChain')
+      }
 
-    const account = await window.connex.thor.account(address).get()
-    return {
-      vet: account.balance || '0',
-      vtho: account.energy || '0'
+      const account = await window.connex.thor.account(address).get()
+      return {
+        vet: account.balance || '0',
+        vtho: account.energy || '0'
+      }
+    } catch (error) {
+      console.error('Balance check failed:', error)
+      return { vet: '0', vtho: '0' }
     }
   }
 

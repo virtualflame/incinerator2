@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { vechain } from '../lib/vechain/connection'
+import { ethers } from 'ethers'
 
 export default function TestPage() {
   const [status, setStatus] = useState('')
@@ -50,8 +51,8 @@ export default function TestPage() {
         {isConnected && (
           <div className="p-4 bg-green-100 rounded">
             <p>✓ Connected to VeChain Testnet</p>
-            <p>Balance: {balance.vet} VET</p>
-            <p>Energy: {balance.vtho} VTHO</p>
+            <p>Balance: {ethers.formatEther(balance.vet)} TEST-VET</p>
+            <p>Energy: {ethers.formatEther(balance.vtho)} TEST-VTHO</p>
           </div>
         )}
 

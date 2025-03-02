@@ -16,6 +16,12 @@ export class VeChainConnection {
     network: 'testnet'  // Default to testnet
   }
 
+  private async ensureConnected(): Promise<void> {
+    if (!this.status.isConnected) {
+      await this.connect()
+    }
+  }
+
   private async waitForConnex(timeoutMs = 10000): Promise<void> {
     return new Promise((resolve, reject) => {
       if (typeof window !== 'undefined' && window.connex) {
@@ -95,7 +101,13 @@ export class VeChainConnection {
     vtho: string
   }> {
     try {
+      await this.ensureConnected()
       await this.waitForConnex()
+
+      if (!window.connex?.thor) {
+        throw new Error('VeWorld not properly initialized')
+      }
+
       const account = await window.connex.thor.account(address).get()
       return {
         vet: account.balance,

@@ -8,6 +8,8 @@ export default function TestPage() {
   const [status, setStatus] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [balance, setBalance] = useState({ vet: '0', vtho: '0' })
+  const [isDeploying, setIsDeploying] = useState(false)
+  const [deployedCollections, setDeployedCollections] = useState([])
 
   const connectWallet = async () => {
     try {

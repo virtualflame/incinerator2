@@ -18,8 +18,8 @@ export class VeChainConnection {
 
   // Check if VeWorld is available
   public isWalletAvailable(): boolean {
-    return typeof window !== 'undefined' && 
-      (window.connex || window.vechain)
+    if (typeof window === 'undefined') return false
+    return !!(window.connex || window.vechain)  // Double bang to ensure boolean
   }
 
   private async waitForVeWorld(timeoutMs = 20000): Promise<void> {

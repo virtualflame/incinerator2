@@ -21,12 +21,15 @@ export class VeChainConnection {
     network: 'testnet'
   }
 
-  // Simplified wallet check
+  // Improved wallet check
   public isWalletAvailable(): boolean {
     try {
-      return typeof window !== 'undefined' && 
-        typeof window.vechain !== 'undefined' && 
-        typeof window.connex !== 'undefined'
+      // VeWorld injects both vechain and connex objects
+      return !!(
+        typeof window !== 'undefined' &&
+        window.vechain &&
+        window.connex
+      )
     } catch {
       return false
     }
@@ -34,29 +37,31 @@ export class VeChainConnection {
 
   private async waitForVeWorld(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Check if already available
-      if (window.connex) {
+      // If already injected, resolve immediately
+      if (this.isWalletAvailable()) {
         resolve()
         return
       }
 
-      // Watch for Connex injection
-      let attempts = 0
-      const maxAttempts = 20
-
-      const checkConnex = setInterval(() => {
-        if (window.connex) {
-          clearInterval(checkConnex)
+      // Listen for vechain injection
+      const handleVeChain = () => {
+        if (this.isWalletAvailable()) {
+          window.removeEventListener('vechain', handleVeChain)
           resolve()
-          return
         }
+      }
 
-        attempts++
-        if (attempts >= maxAttempts) {
-          clearInterval(checkConnex)
-          reject(new Error('Please unlock your VeWorld wallet'))
-        }
-      }, 500)
+      // Add listener
+      window.addEventListener('vechain', handleVeChain)
+
+      // Check immediately in case we missed the event
+      handleVeChain()
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        window.removeEventListener('vechain', handleVeChain)
+        reject(new Error('VeWorld not detected. Please install or unlock VeWorld wallet.'))
+      }, 10000)
     })
   }
 

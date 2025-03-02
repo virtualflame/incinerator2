@@ -23,16 +23,24 @@ export default function TestPage() {
 
   // Add wallet detection effect
   useEffect(() => {
-    const checkWallet = async () => {
+    const checkWallet = () => {
       const hasWallet = vechain.isWalletAvailable()
-      if (!hasWallet) {
-        setStatus('Please install VeWorld wallet extension')
-      } else {
+      if (hasWallet) {
         setStatus('VeWorld detected. Click connect to continue.')
+      } else {
+        setStatus('Waiting for VeWorld...')
       }
     }
 
+    // Check immediately
     checkWallet()
+
+    // Listen for vechain injection
+    window.addEventListener('vechain', checkWallet)
+
+    return () => {
+      window.removeEventListener('vechain', checkWallet)
+    }
   }, [])
 
   const connectWallet = async () => {

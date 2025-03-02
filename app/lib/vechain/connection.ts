@@ -151,33 +151,6 @@ export class VeChainConnection {
     if (!window.connex) return false
     return window.connex.thor.genesis.id === TESTNET_CONFIG.genesis
   }
-
-  public async deployContract(bytecode: string, constructorData: string): Promise<string> {
-    try {
-      await this.waitForVeWorld();
-
-      const deployTx = await window.connex.vendor.sign('tx', [{
-        to: null,
-        value: '0',
-        data: bytecode + constructorData.slice(2),
-        gas: 2000000
-      }]).request();
-
-      if (!deployTx.txid) {
-        throw new Error('Failed to get transaction ID');
-      }
-
-      const receipt = await window.connex.thor.transaction(deployTx.txid).getReceipt();
-      if (!receipt.outputs?.[0]?.contractAddress) {
-        throw new Error('Deployment failed');
-      }
-
-      return receipt.outputs[0].contractAddress;
-    } catch (error) {
-      console.error('Contract deployment failed:', error);
-      throw error;
-    }
-  }
 }
 
 // Export a single instance

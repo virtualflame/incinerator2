@@ -19,6 +19,20 @@ export default function DeployPage() {
   const [isTestnet, setIsTestnet] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  useEffect(() => {
+    const checkVeWorld = async () => {
+      try {
+        if (typeof window !== 'undefined' && window.connex?.thor) {
+          const status = await vechain.connect()
+          setIsConnected(status.isConnected)
+        }
+      } catch (error) {
+        console.log('VeWorld not ready:', error)
+      }
+    }
+    checkVeWorld()
+  }, [])
+
   const connectWallet = async () => {
     try {
       setIsLoading(true)

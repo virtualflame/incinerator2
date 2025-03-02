@@ -26,10 +26,8 @@ export default function RootLayout({
 
 import './globals.css'
 
-// Remove the deploy route from navigation
+// Remove any test/deploy routes
 const navigation = [
   { name: 'Home', href: '/' },
-  { name: 'Mission', href: '/mission' },
-  // Remove this line:
-  // { name: 'Deploy', href: '/deploy' },
+  { name: 'Mission', href: '/mission' }
 ]

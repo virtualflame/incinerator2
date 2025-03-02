@@ -21,15 +21,11 @@ export class VeChainConnection {
     network: 'testnet'
   }
 
-  // Improved wallet check
+  // VeWorld specific check
   public isWalletAvailable(): boolean {
     try {
-      // VeWorld injects both vechain and connex objects
-      return !!(
-        typeof window !== 'undefined' &&
-        window.vechain &&
-        window.connex
-      )
+      // VeWorld injects window.vechain first, then connex
+      return !!(window?.vechain)
     } catch {
       return false
     }
@@ -37,45 +33,39 @@ export class VeChainConnection {
 
   private async waitForVeWorld(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // If already injected, resolve immediately
-      if (this.isWalletAvailable()) {
-        resolve()
-        return
+      // Check for initial vechain object
+      if (window?.vechain) {
+        // Wait for Connex to be fully injected
+        const checkConnex = setInterval(() => {
+          if (window.connex?.thor && window.connex?.vendor) {
+            clearInterval(checkConnex)
+            resolve()
+          }
+        }, 100)
+
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          clearInterval(checkConnex)
+          reject(new Error('VeWorld not responding. Please unlock your wallet.'))
+        }, 5000)
+      } else {
+        reject(new Error('VeWorld not found. Please install VeWorld extension.'))
       }
-
-      // Listen for vechain injection
-      const handleVeChain = () => {
-        if (this.isWalletAvailable()) {
-          window.removeEventListener('vechain', handleVeChain)
-          resolve()
-        }
-      }
-
-      // Add listener
-      window.addEventListener('vechain', handleVeChain)
-
-      // Check immediately in case we missed the event
-      handleVeChain()
-
-      // Timeout after 10 seconds
-      setTimeout(() => {
-        window.removeEventListener('vechain', handleVeChain)
-        reject(new Error('VeWorld not detected. Please install or unlock VeWorld wallet.'))
-      }, 10000)
     })
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
+      // Wait for full VeWorld initialization
       await this.waitForVeWorld()
 
-      // Simple check for testnet
+      // Verify we're on testnet
       const genesis = window.connex?.thor?.genesis?.id
       if (genesis !== '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127') {
-        throw new Error('Please switch to VeChain testnet')
+        throw new Error('Please switch to VeChain testnet in VeWorld')
       }
 
-      // Get user's address
+      // Request wallet connection
       const cert = await window.connex.vendor.sign('cert', {
         purpose: 'identification',
         payload: {
@@ -85,7 +75,7 @@ export class VeChainConnection {
       }).request()
 
       if (!cert?.annex?.signer) {
-        throw new Error('Failed to get wallet address')
+        throw new Error('Could not get wallet address. Please try again.')
       }
 
       this.status = {
@@ -95,7 +85,6 @@ export class VeChainConnection {
       }
 
       return this.status
-
     } catch (error) {
       console.error('Connection error:', error)
       this.status = {
@@ -107,26 +96,18 @@ export class VeChainConnection {
     }
   }
 
-  // Get wallet balance
   public async getBalance(address: string): Promise<{
     vet: string,
     vtho: string
   }> {
-    try {
-      await this.waitForVeWorld()
-      
-      if (!window.connex?.thor) {
-        throw new Error('VeWorld not properly initialized')
-      }
+    if (!window.connex?.thor) {
+      throw new Error('VeWorld not initialized')
+    }
 
-      const account = await window.connex.thor.account(address).get()
-      return {
-        vet: account.balance,
-        vtho: account.energy
-      }
-    } catch (error) {
-      console.error('Balance check failed:', error)
-      return { vet: '0', vtho: '0' }
+    const account = await window.connex.thor.account(address).get()
+    return {
+      vet: account.balance || '0',
+      vtho: account.energy || '0'
     }
   }
 

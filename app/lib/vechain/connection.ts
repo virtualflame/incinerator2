@@ -16,6 +16,20 @@ export class VeChainConnection {
     network: 'testnet'  // Default to testnet
   }
 
+  private async waitForConnex(): Promise<boolean> {
+    let attempts = 0
+    const maxAttempts = 20 // 10 seconds total
+    
+    while (attempts < maxAttempts) {
+      if (typeof window !== 'undefined' && window.connex) {
+        return true
+      }
+      await new Promise(resolve => setTimeout(resolve, 500))
+      attempts++
+    }
+    return false
+  }
+
   // Check if VeWorld is available
   public isWalletAvailable(): boolean {
     return typeof window !== 'undefined' && 
@@ -24,39 +38,48 @@ export class VeChainConnection {
 
   // Connect to VeWorld
   public async connect(): Promise<ConnectionStatus> {
-    // Wait for window.connex to be available
-    let attempts = 0
-    while (!window.connex && attempts < 10) {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      attempts++
-    }
-
-    if (!window.connex) {
-      throw new Error('VeWorld not found. Please install VeWorld extension.')
-    }
-
-    // Verify testnet
-    if (window.connex.thor.genesis.id !== TESTNET_CONFIG.genesis) {
-      throw new Error('Please connect to VeChain testnet')
-    }
-
-    // Get address
-    const cert = await window.connex.vendor.sign('cert', {
-      purpose: 'identification',
-      payload: {
-        type: 'text',
-        content: 'Connect to app'
+    try {
+      const hasConnex = await this.waitForConnex()
+      if (!hasConnex) {
+        throw new Error('VeWorld not found. Please install VeWorld extension.')
       }
-    }).request()
 
-    if (!cert.annex?.signer) {
-      throw new Error('Failed to get wallet address')
-    }
+      // Now we can safely use window.connex
+      const connex = window.connex
+      
+      // Verify testnet
+      if (connex.thor.genesis.id !== TESTNET_CONFIG.genesis) {
+        throw new Error('Please connect to VeChain testnet')
+      }
 
-    return {
-      isConnected: true,
-      address: cert.annex.signer,
-      network: 'testnet'
+      // Get address
+      const cert = await connex.vendor.sign('cert', {
+        purpose: 'identification',
+        payload: {
+          type: 'text',
+          content: 'Connect to app'
+        }
+      }).request()
+
+      if (!cert.annex?.signer) {
+        throw new Error('Failed to get wallet address')
+      }
+
+      this.status = {
+        isConnected: true,
+        address: cert.annex.signer,
+        network: 'testnet'
+      }
+
+      return this.status
+
+    } catch (error) {
+      this.status = {
+        isConnected: false,
+        address: null,
+        network: 'testnet'
+      }
+      throw error
     }
   }
 
@@ -65,8 +88,11 @@ export class VeChainConnection {
     vet: string,
     vtho: string
   }> {
-    if (!window.connex) throw new Error('Not connected')
-    
+    const hasConnex = await this.waitForConnex()
+    if (!hasConnex) {
+      throw new Error('VeWorld not connected')
+    }
+
     const account = await window.connex.thor.account(address).get()
     return {
       vet: account.balance,

@@ -17,23 +17,6 @@ export default function DeployPage() {
   const [isDeploying, setIsDeploying] = useState(false)
   const [balance, setBalance] = useState({ vet: '0', vtho: '0' })
 
-  // Only check connection on mount
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const status = await vechain.connect()
-        setIsConnected(status.isConnected)
-        if (status.isConnected && status.address) {
-          const bal = await vechain.getBalance(status.address)
-          setBalance(bal)
-        }
-      } catch (error) {
-        console.log('Initial connection check failed:', error)
-      }
-    }
-    init()
-  }, [])
-
   const connectWallet = async () => {
     try {
       setStatus('Connecting to VeWorld...')
@@ -44,13 +27,19 @@ export default function DeployPage() {
         setStatus('Connected!')
         
         // Get balance after successful connection
-        const bal = await vechain.getBalance(status.address)
-        setBalance(bal)
+        try {
+          const bal = await vechain.getBalance(status.address)
+          setBalance(bal)
+        } catch (error) {
+          console.log('Balance check failed:', error)
+          // Don't update status - connection still succeeded
+        }
       } else {
         setStatus('Connection failed')
       }
     } catch (error: any) {
       setStatus(`Error: ${error.message || 'Connection failed'}`)
+      setIsConnected(false)
     }
   }
 

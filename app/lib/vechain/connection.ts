@@ -1,11 +1,16 @@
 // Import our types and utilities
 import { ConnectionStatus } from './types'
 
-// Add testnet configuration
+// Add testnet configuration (from VeChain Kit docs)
 const TESTNET_CONFIG = {
   node: 'https://testnet.veblocks.net',
   network: 'test',
-  genesis: '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127'
+  genesis: '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127',
+  // Add Sync Config
+  sync: {
+    enable: true,
+    interval: 10000
+  }
 }
 
 // Simplified connection class
@@ -16,16 +21,16 @@ export class VeChainConnection {
     network: 'testnet'  // Default to testnet
   }
 
-  // Check if VeWorld is available
+  // Improved wallet check based on VeChain Kit
   public isWalletAvailable(): boolean {
     if (typeof window === 'undefined') return false
-    return !!(window.connex || window.vechain)  // Double bang to ensure boolean
+    return !!(window.connex?.thor && window.connex?.vendor)
   }
 
-  private async waitForVeWorld(timeoutMs = 20000): Promise<void> {
+  private async waitForVeWorld(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // First check
-      if (window.connex?.thor) {
+      // Check for full Connex initialization
+      if (window.connex?.thor && window.connex?.vendor) {
         resolve()
         return
       }
@@ -34,8 +39,8 @@ export class VeChainConnection {
       const interval = setInterval(() => {
         attempts++
         
-        // Check for Connex
-        if (window.connex?.thor) {
+        // Check for complete Connex initialization
+        if (window.connex?.thor && window.connex?.vendor) {
           clearInterval(interval)
           resolve()
           return
@@ -44,7 +49,7 @@ export class VeChainConnection {
         // Timeout after 20 attempts (10 seconds)
         if (attempts > 20) {
           clearInterval(interval)
-          reject(new Error('Please install VeWorld wallet extension'))
+          reject(new Error('VeWorld wallet not detected. Please install the extension.'))
         }
       }, 500)
     })

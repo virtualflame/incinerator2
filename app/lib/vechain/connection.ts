@@ -125,19 +125,31 @@ export class VeChainConnection {
   }
 
   async getAddress(): Promise<string> {
-    const cert = await window.connex.vendor.sign('cert', {
-      purpose: 'identification',
-      payload: {
-        type: 'text',
-        content: 'Get address'
+    try {
+      await this.ensureConnected()
+      await this.waitForConnex()
+
+      if (!window.connex?.vendor) {
+        throw new Error('VeWorld not properly initialized')
       }
-    }).request()
 
-    if (!cert.annex?.signer) {
-      throw new Error('Failed to get wallet address')
+      const cert = await window.connex.vendor.sign('cert', {
+        purpose: 'identification',
+        payload: {
+          type: 'text',
+          content: 'Get address'
+        }
+      }).request()
+
+      if (!cert.annex?.signer) {
+        throw new Error('Failed to get wallet address')
+      }
+
+      return cert.annex.signer
+    } catch (error) {
+      console.error('Failed to get address:', error)
+      throw error
     }
-
-    return cert.annex.signer
   }
 
   public async verifyTestnet(): Promise<boolean> {
@@ -146,30 +158,39 @@ export class VeChainConnection {
   }
 
   public async deployContract(bytecode: string, constructorData: string): Promise<string> {
-    const connex = window.connex
-    if (!connex) throw new Error('VeWorld not connected')
+    try {
+      await this.ensureConnected()
+      await this.waitForConnex()
 
-    if (!await this.verifyTestnet()) {
-      throw new Error('Please connect to VeChain testnet')
+      if (!window.connex?.vendor) {
+        throw new Error('VeWorld not properly initialized')
+      }
+
+      if (!await this.verifyTestnet()) {
+        throw new Error('Please connect to VeChain testnet')
+      }
+
+      const deployTx = await window.connex.vendor.sign('tx', [{
+        to: null,
+        value: '0',
+        data: bytecode + constructorData.slice(2),
+        gas: 2000000
+      }]).request()
+
+      if (!deployTx.txid) {
+        throw new Error('Failed to get transaction ID')
+      }
+
+      const receipt = await window.connex.thor.transaction(deployTx.txid).getReceipt()
+      if (!receipt.outputs?.[0]?.contractAddress) {
+        throw new Error('Deployment failed')
+      }
+
+      return receipt.outputs[0].contractAddress
+    } catch (error) {
+      console.error('Contract deployment failed:', error)
+      throw error
     }
-
-    const deployTx = await connex.vendor.sign('tx', [{
-      to: null,
-      value: '0',
-      data: bytecode + constructorData.slice(2),
-      gas: 2000000
-    }]).request()
-
-    if (!deployTx.txid) {
-      throw new Error('Failed to get transaction ID')
-    }
-
-    const receipt = await connex.thor.transaction(deployTx.txid).getReceipt()
-    if (!receipt.outputs?.[0]?.contractAddress) {
-      throw new Error('Deployment failed')
-    }
-
-    return receipt.outputs[0].contractAddress
   }
 }
 

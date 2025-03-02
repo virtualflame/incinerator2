@@ -16,18 +16,29 @@ export class VeChainConnection {
     network: 'testnet'  // Default to testnet
   }
 
-  private async waitForVeWorld(): Promise<void> {
-    let attempts = 0;
-    const maxAttempts = 20;
-
-    while (attempts < maxAttempts) {
+  private async waitForVeWorld(timeoutMs = 20000): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Check if already available
       if (typeof window !== 'undefined' && window.connex?.thor) {
-        return;
+        resolve()
+        return
       }
-      await new Promise(r => setTimeout(r, 500));
-      attempts++;
-    }
-    throw new Error('VeWorld not found or not initialized');
+
+      // Set up interval to check for VeWorld
+      const interval = setInterval(() => {
+        if (typeof window !== 'undefined' && window.connex?.thor) {
+          clearInterval(interval)
+          resolve()
+          return
+        }
+      }, 500)
+
+      // Set timeout
+      setTimeout(() => {
+        clearInterval(interval)
+        reject(new Error('VeWorld connection timeout'))
+      }, timeoutMs)
+    })
   }
 
   // Check if VeWorld is available
@@ -39,42 +50,45 @@ export class VeChainConnection {
   // Connect to VeWorld
   public async connect(): Promise<ConnectionStatus> {
     try {
-      // Wait for VeWorld
-      await this.waitForVeWorld();
-
+      await this.waitForVeWorld()
+      
+      // Now we can safely use window.connex
+      const connex = window.connex
+      
       // Verify testnet
-      if (window.connex.thor.genesis.id !== TESTNET_CONFIG.genesis) {
-        throw new Error('Please switch to VeChain testnet');
+      if (connex.thor.genesis.id !== TESTNET_CONFIG.genesis) {
+        throw new Error('Please switch to VeChain testnet')
       }
 
       // Get address
-      const cert = await window.connex.vendor.sign('cert', {
+      const cert = await connex.vendor.sign('cert', {
         purpose: 'identification',
         payload: {
           type: 'text',
           content: 'Connect to app'
         }
-      }).request();
+      }).request()
 
       if (!cert.annex?.signer) {
-        throw new Error('Failed to get wallet address');
+        throw new Error('Failed to get wallet address')
       }
 
       this.status = {
         isConnected: true,
         address: cert.annex.signer,
         network: 'testnet'
-      };
+      }
 
-      return this.status;
+      return this.status
+
     } catch (error) {
-      console.error('Connection error:', error);
+      console.error('Connection error:', error)
       this.status = {
         isConnected: false,
         address: null,
         network: 'testnet'
-      };
-      throw error;
+      }
+      throw error
     }
   }
 
@@ -84,16 +98,20 @@ export class VeChainConnection {
     vtho: string
   }> {
     try {
-      await this.waitForVeWorld();
+      await this.waitForVeWorld()
       
-      const account = await window.connex.thor.account(address).get();
+      if (!window.connex?.thor) {
+        throw new Error('VeWorld not properly initialized')
+      }
+
+      const account = await window.connex.thor.account(address).get()
       return {
         vet: account.balance,
         vtho: account.energy
-      };
+      }
     } catch (error) {
-      console.error('Balance check failed:', error);
-      return { vet: '0', vtho: '0' };
+      console.error('Balance check failed:', error)
+      return { vet: '0', vtho: '0' }
     }
   }
 

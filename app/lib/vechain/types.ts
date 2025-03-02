@@ -44,7 +44,7 @@ export type VeChainNetwork = 'mainnet' | 'testnet'
 export interface ConnectionStatus {
   isConnected: boolean
   address: string | null
-  network: 'testnet'  // We only use testnet
+  network: string
 }
 
 // Add collection types

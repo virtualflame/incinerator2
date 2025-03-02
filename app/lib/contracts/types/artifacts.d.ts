@@ -4,4 +4,9 @@ declare module "*.json" {
     bytecode: string;
   };
   export = content;
+}
+
+export interface ContractArtifact {
+  bytecode: string
+  abi: any[]
 } 

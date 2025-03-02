@@ -16,60 +16,68 @@ export class VeChainConnection {
     network: 'testnet'  // Default to testnet
   }
 
+  // Check if VeWorld is available
+  public isWalletAvailable(): boolean {
+    return typeof window !== 'undefined' && 
+      (window.connex || window.vechain)
+  }
+
   private async waitForVeWorld(timeoutMs = 20000): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Check if already available
-      if (typeof window !== 'undefined' && window.connex?.thor) {
+      // First check
+      if (window.connex?.thor) {
         resolve()
         return
       }
 
-      // Set up interval to check for VeWorld
+      let attempts = 0
       const interval = setInterval(() => {
-        if (typeof window !== 'undefined' && window.connex?.thor) {
+        attempts++
+        
+        // Check for Connex
+        if (window.connex?.thor) {
           clearInterval(interval)
           resolve()
           return
         }
+
+        // Timeout after 20 attempts (10 seconds)
+        if (attempts > 20) {
+          clearInterval(interval)
+          reject(new Error('Please install VeWorld wallet extension'))
+        }
       }, 500)
-
-      // Set timeout
-      setTimeout(() => {
-        clearInterval(interval)
-        reject(new Error('VeWorld connection timeout'))
-      }, timeoutMs)
     })
-  }
-
-  // Check if VeWorld is available
-  public isWalletAvailable(): boolean {
-    return typeof window !== 'undefined' && 
-      typeof window.vechain !== 'undefined'
   }
 
   // Connect to VeWorld
   public async connect(): Promise<ConnectionStatus> {
     try {
+      // Check for wallet
       if (!this.isWalletAvailable()) {
-        throw new Error('VeWorld wallet not found')
+        throw new Error('Please install VeWorld wallet extension')
       }
 
+      // Wait for initialization
       await this.waitForVeWorld()
-      
-      // Now we can safely use window.connex
+
+      // Get Connex instance
       const connex = window.connex
-      
+      if (!connex) {
+        throw new Error('VeWorld not properly initialized')
+      }
+
       // Verify testnet
       if (connex.thor.genesis.id !== TESTNET_CONFIG.genesis) {
         throw new Error('Please switch to VeChain testnet')
       }
 
-      // Get address
+      // Request connection
       const cert = await connex.vendor.sign('cert', {
         purpose: 'identification',
         payload: {
           type: 'text',
-          content: 'Connect to app'
+          content: 'Connect to VFS Incinerator'
         }
       }).request()
 
@@ -84,7 +92,6 @@ export class VeChainConnection {
       }
 
       return this.status
-
     } catch (error) {
       console.error('Connection error:', error)
       this.status = {

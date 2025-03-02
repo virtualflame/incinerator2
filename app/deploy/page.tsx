@@ -16,6 +16,7 @@ export default function DeployPage() {
   const [isConnected, setIsConnected] = useState(false)
   const [isDeploying, setIsDeploying] = useState(false)
   const [balance, setBalance] = useState({ vet: '0', vtho: '0' })
+  const [isTestnet, setIsTestnet] = useState(false)
 
   const connectWallet = async () => {
     try {
@@ -23,8 +24,18 @@ export default function DeployPage() {
       const status = await vechain.connect()
       
       if (status.isConnected && status.address) {
+        // Check testnet first
+        const onTestnet = await vechain.verifyTestnet()
+        setIsTestnet(onTestnet)
+        
+        if (!onTestnet) {
+          setStatus('Please switch to VeChain testnet')
+          setIsConnected(false)
+          return
+        }
+
         setIsConnected(true)
-        setStatus('Connected!')
+        setStatus('Connected to testnet!')
         
         // Get balance after successful connection
         try {
@@ -32,7 +43,6 @@ export default function DeployPage() {
           setBalance(bal)
         } catch (error) {
           console.log('Balance check failed:', error)
-          // Don't update status - connection still succeeded
         }
       } else {
         setStatus('Connection failed')
@@ -91,13 +101,34 @@ export default function DeployPage() {
         )}
 
         {isConnected && (
-          <button
-            className="px-4 py-2 bg-purple-500 text-white rounded disabled:opacity-50"
-            onClick={() => deployCollection('TestNFT', 'TEST')}
-            disabled={isDeploying}
-          >
-            Deploy Test Collection
-          </button>
+          <>
+            <div className="p-4 bg-green-100 rounded">
+              <p>✓ Connected to VeChain Testnet</p>
+              <p>Balance: {ethers.formatEther(balance.vet)} TEST-VET</p>
+              <p>Energy: {ethers.formatEther(balance.vtho)} TEST-VTHO</p>
+              {Number(balance.vet) < ethers.parseEther('0.1') && (
+                <p className="text-red-500 mt-2">
+                  Low balance! Get testnet tokens from the&nbsp;
+                  <a 
+                    href="https://faucet.vecha.in/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    VeChain Testnet Faucet
+                  </a>
+                </p>
+              )}
+            </div>
+
+            <button
+              className="px-4 py-2 bg-purple-500 text-white rounded disabled:opacity-50"
+              onClick={() => deployCollection('TestNFT', 'TEST')}
+              disabled={isDeploying || !isTestnet}
+            >
+              Deploy Test Collection
+            </button>
+          </>
         )}
 
         <div className="mt-4">

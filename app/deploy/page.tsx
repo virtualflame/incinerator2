@@ -17,23 +17,26 @@ export default function DeployPage() {
   const [isDeploying, setIsDeploying] = useState(false)
   const [balance, setBalance] = useState({ vet: '0', vtho: '0' })
   const [isTestnet, setIsTestnet] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const connectWallet = async () => {
     try {
+      setIsLoading(true)
       setStatus('Connecting to VeWorld...')
+
+      // First check if we're on testnet
+      const onTestnet = await vechain.verifyTestnet()
+      setIsTestnet(onTestnet)
+      
+      if (!onTestnet) {
+        setStatus('Please switch to VeChain testnet')
+        return
+      }
+
+      // Then connect
       const status = await vechain.connect()
       
       if (status.isConnected && status.address) {
-        // Check testnet first
-        const onTestnet = await vechain.verifyTestnet()
-        setIsTestnet(onTestnet)
-        
-        if (!onTestnet) {
-          setStatus('Please switch to VeChain testnet')
-          setIsConnected(false)
-          return
-        }
-
         setIsConnected(true)
         setStatus('Connected to testnet!')
         
@@ -50,6 +53,8 @@ export default function DeployPage() {
     } catch (error: any) {
       setStatus(`Error: ${error.message || 'Connection failed'}`)
       setIsConnected(false)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -93,12 +98,13 @@ export default function DeployPage() {
       <div className="space-y-4">
         {!isConnected && (
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded"
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
             onClick={connectWallet}
+            disabled={isLoading}
             aria-label="Connect VeWorld Wallet"
             title="Connect your VeWorld wallet"
           >
-            Connect Wallet
+            {isLoading ? 'Connecting...' : 'Connect Wallet'}
           </button>
         )}
 

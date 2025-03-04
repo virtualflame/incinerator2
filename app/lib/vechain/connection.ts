@@ -79,15 +79,31 @@ export class VeChainConnection {
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      // Wait for VeWorld
+      // First check for VeWorld
       if (!window.vechain) {
         throw new Error('VeWorld not found')
       }
 
-      // Request connection
-      await window.vechain.enable()
+      // Enable VeWorld and wait for connection
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Connection timeout'))
+        }, 30000)
 
-      // Wait for Connex
+        // Listen for connect event
+        window.vechain.on('connect', () => {
+          clearTimeout(timeout)
+          resolve()
+        })
+
+        // Trigger connection
+        window.vechain.enable().catch(error => {
+          clearTimeout(timeout)
+          reject(error)
+        })
+      })
+
+      // Wait for Connex to be ready
       let attempts = 0
       while (!window.connex?.thor && attempts < 50) {
         await new Promise(r => setTimeout(r, 100))
@@ -98,7 +114,7 @@ export class VeChainConnection {
         throw new Error('VeWorld connection failed')
       }
 
-      // Get address
+      // Get user's address
       const cert = await window.connex.vendor.sign('cert', {
         purpose: 'identification',
         payload: {
@@ -111,6 +127,7 @@ export class VeChainConnection {
         throw new Error('Failed to get wallet address')
       }
 
+      // Update status
       this.status = {
         isConnected: true,
         address: cert.annex.signer,

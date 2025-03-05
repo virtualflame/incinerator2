@@ -37,57 +37,35 @@ export class VeChainConnection {
   }
 
   private async waitForVeWorld(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      // Check if already connected
-      if (window.connex?.thor && window.connex?.vendor) {
-        resolve()
-        return
-      }
-
-      // Wait for VeWorld to be ready
+    return new Promise((resolve, reject) => {
       let attempts = 0
       const maxAttempts = 50
+      const checkInterval = 100 // ms
+
       const interval = setInterval(() => {
         attempts++
-
-        // Check if VeWorld is ready
-        if (window.vechain) {
+        
+        // Check for both VeWorld and Connex
+        if (window.veworld && window.connex?.thor) {
           clearInterval(interval)
-          
-          // Listen for connect event
-          window.vechain.on('connect', () => {
-            if (window.connex?.thor) {
-              resolve()
-            }
-          })
-
-          // Request connection
-          window.vechain.enable().catch((error: Error) => {
-            reject(error)
-          })
+          resolve()
+          return
         }
 
-        // Timeout after max attempts
+        // Timeout after 5 seconds
         if (attempts >= maxAttempts) {
           clearInterval(interval)
-          reject(new Error('VeWorld not detected'))
+          reject(new Error('VeWorld not detected. Please install VeWorld extension.'))
         }
-      }, 100)
+      }, checkInterval)
     })
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      // Wait for Connex to be injected
-      let attempts = 0
-      while (!window.connex?.thor && attempts < 50) {
-        await new Promise(r => setTimeout(r, 100))
-        attempts++
-      }
-
-      if (!window.connex?.thor) {
-        throw new Error('VeWorld not detected')
-      }
+      console.log('Waiting for VeWorld...')
+      await this.waitForVeWorld()
+      console.log('VeWorld detected')
 
       // Request certificate to get address
       const cert = await window.connex.vendor.sign('cert', {
@@ -109,7 +87,7 @@ export class VeChainConnection {
         network: 'testnet'
       }
 
-      console.log('Connected with address:', this.status.address) // Debug log
+      console.log('Connected with address:', this.status.address)
       this.notifyListeners()
       return this.status
 
@@ -142,7 +120,7 @@ export class VeChainConnection {
         throw new Error('Not connected to VeChain')
       }
 
-      console.log('Fetching balance for:', address) // Debug log
+      console.log('Fetching balance for:', address)
 
       const account = await window.connex.thor.account(address).get()
       
@@ -152,7 +130,7 @@ export class VeChainConnection {
         b3tr: '0' // We'll add B3TR later
       }
 
-      console.log('Balances:', balances) // Debug log
+      console.log('Balances:', balances)
       return balances
 
     } catch (error) {
@@ -179,6 +157,17 @@ export class VeChainConnection {
   public async verifyTestnet(): Promise<boolean> {
     if (!window.connex) return false
     return window.connex.thor.genesis.id === TESTNET_CONFIG.genesis
+  }
+}
+
+// Add VeWorld types
+declare global {
+  interface Window {
+    veworld?: any;
+    connex?: {
+      thor: any;
+      vendor: any;
+    };
   }
 }
 

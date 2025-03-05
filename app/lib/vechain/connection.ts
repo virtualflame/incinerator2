@@ -78,8 +78,24 @@ export class VeChainConnection {
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      // Wait for VeWorld and handle connection
-      await this.waitForVeWorld()
+      // Check for VeWorld
+      if (!window.vechain) {
+        throw new Error('VeWorld not found')
+      }
+
+      // Enable VeWorld
+      await window.vechain.enable()
+
+      // Wait for Connex
+      let attempts = 0
+      while (!window.connex?.thor && attempts < 50) {
+        await new Promise(r => setTimeout(r, 100))
+        attempts++
+      }
+
+      if (!window.connex?.thor) {
+        throw new Error('VeWorld connection failed')
+      }
 
       // Get user's address
       const cert = await window.connex.vendor.sign('cert', {
@@ -101,6 +117,7 @@ export class VeChainConnection {
         network: 'testnet'
       }
 
+      // Notify listeners
       this.notifyListeners()
       return this.status
 
@@ -135,26 +152,12 @@ export class VeChainConnection {
 
       // Get VET and VTHO balances
       const account = await window.connex.thor.account(address).get()
-      
-      // Get B3TR balance (replace with actual B3TR contract address)
-      const B3TR_CONTRACT = '0x...' // Add your B3TR contract address
-      const tokenABI = {
-        "constant": true,
-        "inputs": [{"name": "_owner","type": "address"}],
-        "name": "balanceOf",
-        "outputs": [{"name": "balance","type": "uint256"}],
-        "type": "function"
-      }
 
-      const b3trBalance = await window.connex.thor
-        .account(B3TR_CONTRACT)
-        .method(tokenABI)
-        .call(address)
-
+      // For now, return actual VET/VTHO balances
       return {
         vet: account.balance || '0',
         vtho: account.energy || '0',
-        b3tr: b3trBalance?.decoded?.balance || '0'
+        b3tr: '0' // We'll add B3TR balance later
       }
     } catch (error) {
       console.error('Balance check failed:', error)
@@ -169,7 +172,7 @@ export class VeChainConnection {
 
   // Add method to check if we're connected
   public isConnected(): boolean {
-    return this.status.isConnected && !!this.status.address
+    return this.status.isConnected && !!this.status.address && !!window.connex?.thor
   }
 
   // Add method to get current address

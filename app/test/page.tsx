@@ -5,7 +5,7 @@ import { vechain } from '../lib/vechain/connection'
 import { ethers } from 'ethers'
 
 export default function TestPage() {
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState('Not Connected')
   const [isConnected, setIsConnected] = useState(false)
   const [balance, setBalance] = useState({
     vet: '0',
@@ -13,44 +13,36 @@ export default function TestPage() {
     b3tr: '0'
   })
 
-  // Add balance update function
   const updateBalance = async () => {
-    if (!vechain.isConnected()) return
-
     const address = vechain.getAddress()
     if (!address) return
 
     try {
       const bal = await vechain.getBalance(address)
-      setBalance({
-        vet: bal.vet,
-        vtho: bal.vtho,
-        b3tr: bal.b3tr
-      })
+      console.log('Balance updated:', bal) // Debug log
+      setBalance(bal)
     } catch (error) {
       console.error('Balance update failed:', error)
     }
   }
 
-  // Update balances periodically
   useEffect(() => {
-    if (!isConnected) return
+    // Check initial connection
+    const isConnected = vechain.isConnected()
+    setIsConnected(isConnected)
+    if (isConnected) {
+      updateBalance()
+    }
 
-    updateBalance()
-    const interval = setInterval(updateBalance, 10000) // Update every 10 seconds
-
-    return () => clearInterval(interval)
-  }, [isConnected])
-
-  // Handle connection events
-  useEffect(() => {
-    vechain.onConnect(async (status) => {
+    // Listen for connection changes
+    vechain.onConnect((status) => {
+      console.log('Connection status:', status) // Debug log
       setIsConnected(status.isConnected)
       if (status.isConnected) {
         setStatus('Connected!')
-        await updateBalance()
+        updateBalance()
       } else {
-        setStatus('Disconnected')
+        setStatus('Not Connected')
       }
     })
   }, [])
@@ -58,8 +50,13 @@ export default function TestPage() {
   const connectWallet = async () => {
     try {
       setStatus('Connecting to VeWorld...')
-      await vechain.connect()
+      const status = await vechain.connect()
+      console.log('Connected:', status) // Debug log
+      setIsConnected(true)
+      setStatus('Connected!')
+      await updateBalance()
     } catch (error: any) {
+      console.error('Connection error:', error)
       setStatus(`Error: ${error.message}`)
       setIsConnected(false)
     }
@@ -75,7 +72,7 @@ export default function TestPage() {
           <h2 className="text-lg font-semibold mb-2">Connection Status</h2>
           <div className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span>{isConnected ? 'Connected' : 'Not Connected'}</span>
+            <span>{status}</span>
           </div>
         </div>
 
@@ -109,12 +106,6 @@ export default function TestPage() {
             </div>
           </div>
         )}
-
-        {/* Status Messages */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold mb-2">Status</h2>
-          <pre className="bg-gray-50 p-2 rounded text-sm">{status}</pre>
-        </div>
       </div>
     </div>
   )

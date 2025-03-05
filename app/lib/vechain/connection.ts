@@ -36,7 +36,7 @@ export class VeChainConnection {
     return typeof window !== 'undefined' && !!window.vechain
   }
 
-  private async waitForVeWorld(): Promise<void> {
+  private async waitForConnex(): Promise<void> {
     return new Promise((resolve, reject) => {
       let attempts = 0
       const maxAttempts = 50
@@ -45,8 +45,8 @@ export class VeChainConnection {
       const interval = setInterval(() => {
         attempts++
         
-        // Check for both VeWorld and Connex
-        if (window.veworld && window.connex?.thor) {
+        // Check for Connex
+        if (window.connex?.thor) {
           clearInterval(interval)
           resolve()
           return
@@ -55,7 +55,7 @@ export class VeChainConnection {
         // Timeout after 5 seconds
         if (attempts >= maxAttempts) {
           clearInterval(interval)
-          reject(new Error('VeWorld not detected. Please install VeWorld extension.'))
+          reject(new Error('VeWorld not detected. Please install VeWorld extension and refresh.'))
         }
       }, checkInterval)
     })
@@ -63,9 +63,9 @@ export class VeChainConnection {
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      console.log('Waiting for VeWorld...')
-      await this.waitForVeWorld()
-      console.log('VeWorld detected')
+      console.log('Waiting for Connex...')
+      await this.waitForConnex()
+      console.log('Connex detected')
 
       // Request certificate to get address
       const cert = await window.connex.vendor.sign('cert', {
@@ -160,13 +160,30 @@ export class VeChainConnection {
   }
 }
 
-// Add VeWorld types
+// Add Connex types
 declare global {
   interface Window {
-    veworld?: any;
     connex?: {
-      thor: any;
-      vendor: any;
+      thor: {
+        account(addr: string): {
+          get(): Promise<{
+            balance: string;
+            energy: string;
+          }>;
+        };
+        genesis: {
+          id: string;
+        };
+      };
+      vendor: {
+        sign(type: string, params: any): {
+          request(): Promise<{
+            annex?: {
+              signer?: string;
+            };
+          }>;
+        };
+      };
     };
   }
 }

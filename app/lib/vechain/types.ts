@@ -45,9 +45,8 @@ export interface Connex {
 // Extend Window interface
 declare global {
   interface Window {
-    readonly vechain: any;
-    readonly ethers: any;
-    readonly connex?: Connex;
+    vechain: any; // VeWorld extension
+    connex?: Connex; // Connex instance
   }
 }
 

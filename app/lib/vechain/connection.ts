@@ -35,27 +35,36 @@ export class VeChainConnection {
   private async waitForConnex(): Promise<void> {
     return new Promise((resolve, reject) => {
       // First check if already available
-      if (typeof window !== 'undefined' && window.connex?.thor) {
+      if (typeof window !== 'undefined' && window.connex?.thor && window.vechain) {
         resolve()
         return
       }
 
       // If not available, wait for injection
       let attempts = 0
-      const maxAttempts = 100 // Increased max attempts
-      const checkInterval = 100 // ms
+      const maxAttempts = 50 // Reduced to avoid long waits
+      const checkInterval = 200 // Increased interval
 
       const checkForConnex = () => {
-        if (typeof window !== 'undefined' && window.connex?.thor) {
+        // Check for both VeWorld and Connex
+        if (typeof window !== 'undefined' && window.connex?.thor && window.vechain) {
           clearInterval(interval)
           resolve()
           return
         }
 
         attempts++
+        console.log(`Checking for VeWorld... (${attempts}/${maxAttempts})`)
+        
         if (attempts >= maxAttempts) {
           clearInterval(interval)
-          reject(new Error('VeWorld wallet not detected. Please install VeWorld and refresh the page.'))
+          if (!window.vechain) {
+            reject(new Error('VeWorld extension not found. Please install VeWorld and refresh.'))
+          } else if (!window.connex?.thor) {
+            reject(new Error('VeWorld not initialized. Please unlock your wallet and refresh.'))
+          } else {
+            reject(new Error('VeWorld connection failed. Please refresh and try again.'))
+          }
         }
       }
 
@@ -68,7 +77,7 @@ export class VeChainConnection {
       // Cleanup after 10 seconds
       setTimeout(() => {
         clearInterval(interval)
-        reject(new Error('VeWorld connection timeout. Please refresh and try again.'))
+        reject(new Error('Connection timeout. Please refresh and try again.'))
       }, 10000)
     })
   }
@@ -79,7 +88,7 @@ export class VeChainConnection {
       await this.waitForConnex()
       console.log('VeWorld detected')
 
-      if (!window.connex?.thor) {
+      if (!window.connex?.thor || !window.vechain) {
         throw new Error('VeWorld not properly initialized')
       }
 

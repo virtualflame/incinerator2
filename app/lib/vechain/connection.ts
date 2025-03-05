@@ -34,16 +34,19 @@ export class VeChainConnection {
 
   private async waitForConnex(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (window.connex?.thor) {
+      // First check if already available
+      if (typeof window !== 'undefined' && window.connex?.thor) {
         resolve()
         return
       }
 
+      // If not available, wait for injection
       let attempts = 0
-      const maxAttempts = 50
+      const maxAttempts = 100 // Increased max attempts
+      const checkInterval = 100 // ms
 
-      const interval = setInterval(() => {
-        if (window.connex?.thor) {
+      const checkForConnex = () => {
+        if (typeof window !== 'undefined' && window.connex?.thor) {
           clearInterval(interval)
           resolve()
           return
@@ -52,24 +55,39 @@ export class VeChainConnection {
         attempts++
         if (attempts >= maxAttempts) {
           clearInterval(interval)
-          reject(new Error('Please install VeWorld wallet extension'))
+          reject(new Error('VeWorld wallet not detected. Please install VeWorld and refresh the page.'))
         }
-      }, 100)
+      }
+
+      // Check immediately
+      checkForConnex()
+      
+      // Then check periodically
+      const interval = setInterval(checkForConnex, checkInterval)
+
+      // Cleanup after 10 seconds
+      setTimeout(() => {
+        clearInterval(interval)
+        reject(new Error('VeWorld connection timeout. Please refresh and try again.'))
+      }, 10000)
     })
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
+      console.log('Waiting for VeWorld...')
       await this.waitForConnex()
+      console.log('VeWorld detected')
 
       if (!window.connex?.thor) {
-        throw new Error('VeWorld not detected')
+        throw new Error('VeWorld not properly initialized')
       }
 
       // Check network
       const genesis = window.connex.thor.genesis
       const isMainnet = genesis.id === '0x00000000851caf3cfdb6e899cf5958bfb1ac3413d346d43539627e6be7ec1b4a'
       
+      console.log('Getting user address...')
       // Get user's address
       const certResponse = await window.connex.vendor
         .sign('cert', {
@@ -84,6 +102,8 @@ export class VeChainConnection {
       if (!certResponse?.annex?.signer) {
         throw new Error('Failed to get wallet address')
       }
+
+      console.log('Connected with address:', certResponse.annex.signer)
 
       this.status = {
         isConnected: true,

@@ -125,21 +125,40 @@ export class VeChainConnection {
 
   public async getBalance(address: string): Promise<{
     vet: string,
-    vtho: string
+    vtho: string,
+    b3tr: string
   }> {
     try {
       if (!window.connex?.thor) {
         throw new Error('Not connected to VeChain')
       }
 
+      // Get VET and VTHO balances
       const account = await window.connex.thor.account(address).get()
+      
+      // Get B3TR balance (replace with actual B3TR contract address)
+      const B3TR_CONTRACT = '0x...' // Add your B3TR contract address
+      const tokenABI = {
+        "constant": true,
+        "inputs": [{"name": "_owner","type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"name": "balance","type": "uint256"}],
+        "type": "function"
+      }
+
+      const b3trBalance = await window.connex.thor
+        .account(B3TR_CONTRACT)
+        .method(tokenABI)
+        .call(address)
+
       return {
         vet: account.balance || '0',
-        vtho: account.energy || '0'
+        vtho: account.energy || '0',
+        b3tr: b3trBalance?.decoded?.balance || '0'
       }
     } catch (error) {
       console.error('Balance check failed:', error)
-      return { vet: '0', vtho: '0' }
+      return { vet: '0', vtho: '0', b3tr: '0' }
     }
   }
 
@@ -148,31 +167,14 @@ export class VeChainConnection {
     return this.status
   }
 
-  async getAddress(): Promise<string> {
-    try {
-      await this.waitForVeWorld()
+  // Add method to check if we're connected
+  public isConnected(): boolean {
+    return this.status.isConnected && !!this.status.address
+  }
 
-      if (!window.connex?.vendor) {
-        throw new Error('VeWorld not properly initialized')
-      }
-
-      const cert = await window.connex.vendor.sign('cert', {
-        purpose: 'identification',
-        payload: {
-          type: 'text',
-          content: 'Get address'
-        }
-      }).request()
-
-      if (!cert.annex?.signer) {
-        throw new Error('Failed to get wallet address')
-      }
-
-      return cert.annex.signer
-    } catch (error) {
-      console.error('Failed to get address:', error)
-      throw error
-    }
+  // Add method to get current address
+  public getAddress(): string | null {
+    return this.status.address
   }
 
   public async verifyTestnet(): Promise<boolean> {

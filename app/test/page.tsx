@@ -13,21 +13,44 @@ export default function TestPage() {
     b3tr: '0'
   })
 
+  // Add balance update function
+  const updateBalance = async () => {
+    if (!vechain.isConnected()) return
+
+    const address = vechain.getAddress()
+    if (!address) return
+
+    try {
+      const bal = await vechain.getBalance(address)
+      setBalance({
+        vet: bal.vet,
+        vtho: bal.vtho,
+        b3tr: bal.b3tr
+      })
+    } catch (error) {
+      console.error('Balance update failed:', error)
+    }
+  }
+
+  // Update balances periodically
   useEffect(() => {
-    // Listen for connection events
+    if (!isConnected) return
+
+    updateBalance()
+    const interval = setInterval(updateBalance, 10000) // Update every 10 seconds
+
+    return () => clearInterval(interval)
+  }, [isConnected])
+
+  // Handle connection events
+  useEffect(() => {
     vechain.onConnect(async (status) => {
       setIsConnected(status.isConnected)
-      if (status.address) {
-        try {
-          const bal = await vechain.getBalance(status.address)
-          setBalance({
-            vet: bal.vet,
-            vtho: bal.vtho,
-            b3tr: '0'
-          })
-        } catch (error) {
-          console.error('Balance check failed:', error)
-        }
+      if (status.isConnected) {
+        setStatus('Connected!')
+        await updateBalance()
+      } else {
+        setStatus('Disconnected')
       }
     })
   }, [])
@@ -36,7 +59,6 @@ export default function TestPage() {
     try {
       setStatus('Connecting to VeWorld...')
       await vechain.connect()
-      setStatus('Connected!')
     } catch (error: any) {
       setStatus(`Error: ${error.message}`)
       setIsConnected(false)
@@ -60,8 +82,8 @@ export default function TestPage() {
         {/* Connect Button */}
         {!isConnected && (
           <button
-            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             onClick={connectWallet}
+            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             Connect VeWorld
           </button>
@@ -74,15 +96,15 @@ export default function TestPage() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span>VET:</span>
-                <span className="font-mono">{ethers.formatEther(balance.vet)} TEST-VET</span>
+                <span className="font-mono">{ethers.formatEther(balance.vet)} VET</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>VTHO:</span>
-                <span className="font-mono">{ethers.formatEther(balance.vtho)} TEST-VTHO</span>
+                <span className="font-mono">{ethers.formatEther(balance.vtho)} VTHO</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>B3TR:</span>
-                <span className="font-mono">{ethers.formatEther(balance.b3tr)} TEST-B3TR</span>
+                <span className="font-mono">{ethers.formatEther(balance.b3tr)} B3TR</span>
               </div>
             </div>
           </div>

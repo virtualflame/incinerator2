@@ -19,7 +19,7 @@ export default function TestPage() {
 
     try {
       const bal = await vechain.getBalance(address)
-      console.log('Balance updated:', bal) // Debug log
+      console.log('Balance updated:', bal)
       setBalance(bal)
     } catch (error) {
       console.error('Balance update failed:', error)
@@ -36,7 +36,7 @@ export default function TestPage() {
 
     // Listen for connection changes
     vechain.onConnect((status) => {
-      console.log('Connection status:', status) // Debug log
+      console.log('Connection status changed:', status)
       setIsConnected(status.isConnected)
       if (status.isConnected) {
         setStatus('Connected!')
@@ -51,12 +51,12 @@ export default function TestPage() {
     try {
       setStatus('Connecting to VeWorld...')
       const status = await vechain.connect()
-      console.log('Connected:', status) // Debug log
+      console.log('Connection successful:', status)
       setIsConnected(true)
       setStatus('Connected!')
       await updateBalance()
     } catch (error: any) {
-      console.error('Connection error:', error)
+      console.error('Connection failed:', error)
       setStatus(`Error: ${error.message}`)
       setIsConnected(false)
     }

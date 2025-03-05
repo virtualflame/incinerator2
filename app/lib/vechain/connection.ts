@@ -78,15 +78,7 @@ export class VeChainConnection {
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      // Check for VeWorld
-      if (!window.vechain) {
-        throw new Error('VeWorld not found')
-      }
-
-      // Enable VeWorld
-      await window.vechain.enable()
-
-      // Wait for Connex
+      // Wait for Connex to be injected
       let attempts = 0
       while (!window.connex?.thor && attempts < 50) {
         await new Promise(r => setTimeout(r, 100))
@@ -94,10 +86,10 @@ export class VeChainConnection {
       }
 
       if (!window.connex?.thor) {
-        throw new Error('VeWorld connection failed')
+        throw new Error('VeWorld not detected')
       }
 
-      // Get user's address
+      // Request certificate to get address
       const cert = await window.connex.vendor.sign('cert', {
         purpose: 'identification',
         payload: {
@@ -117,7 +109,7 @@ export class VeChainConnection {
         network: 'testnet'
       }
 
-      // Notify listeners
+      console.log('Connected with address:', this.status.address) // Debug log
       this.notifyListeners()
       return this.status
 
@@ -150,15 +142,19 @@ export class VeChainConnection {
         throw new Error('Not connected to VeChain')
       }
 
-      // Get VET and VTHO balances
-      const account = await window.connex.thor.account(address).get()
+      console.log('Fetching balance for:', address) // Debug log
 
-      // For now, return actual VET/VTHO balances
-      return {
+      const account = await window.connex.thor.account(address).get()
+      
+      const balances = {
         vet: account.balance || '0',
         vtho: account.energy || '0',
-        b3tr: '0' // We'll add B3TR balance later
+        b3tr: '0' // We'll add B3TR later
       }
+
+      console.log('Balances:', balances) // Debug log
+      return balances
+
     } catch (error) {
       console.error('Balance check failed:', error)
       return { vet: '0', vtho: '0', b3tr: '0' }

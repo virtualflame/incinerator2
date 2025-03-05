@@ -37,82 +37,49 @@ export class VeChainConnection {
   }
 
   private async waitForVeWorld(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
+      // Check if already connected
       if (window.connex?.thor && window.connex?.vendor) {
         resolve()
         return
       }
 
-      if (window.vechain) {
-        try {
-          // Listen for both connect and chainChanged events
+      // Wait for VeWorld to be ready
+      let attempts = 0
+      const maxAttempts = 50
+      const interval = setInterval(() => {
+        attempts++
+
+        // Check if VeWorld is ready
+        if (window.vechain) {
+          clearInterval(interval)
+          
+          // Listen for connect event
           window.vechain.on('connect', () => {
             if (window.connex?.thor) {
-              this.notifyListeners()
               resolve()
             }
           })
 
-          window.vechain.on('chainChanged', () => {
-            // Refresh connection when chain changes
-            this.verifyTestnet().then(isTestnet => {
-              if (!isTestnet) {
-                this.disconnect()
-              }
-            })
+          // Request connection
+          window.vechain.enable().catch((error: Error) => {
+            reject(error)
           })
-          
-          // Trigger popup
-          window.vechain.enable()
-        } catch (error) {
-          reject(new Error('Please unlock VeWorld wallet'))
         }
-      } else {
-        reject(new Error('VeWorld not found'))
-      }
 
-      setTimeout(() => {
-        reject(new Error('Connection timeout. Please try again.'))
-      }, 30000)
+        // Timeout after max attempts
+        if (attempts >= maxAttempts) {
+          clearInterval(interval)
+          reject(new Error('VeWorld not detected'))
+        }
+      }, 100)
     })
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      // First check for VeWorld
-      if (!window.vechain) {
-        throw new Error('VeWorld not found')
-      }
-
-      // Enable VeWorld and wait for connection
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Connection timeout'))
-        }, 30000)
-
-        // Listen for connect event
-        window.vechain.on('connect', () => {
-          clearTimeout(timeout)
-          resolve()
-        })
-
-        // Trigger connection
-        window.vechain.enable().catch(error => {
-          clearTimeout(timeout)
-          reject(error)
-        })
-      })
-
-      // Wait for Connex to be ready
-      let attempts = 0
-      while (!window.connex?.thor && attempts < 50) {
-        await new Promise(r => setTimeout(r, 100))
-        attempts++
-      }
-
-      if (!window.connex?.thor) {
-        throw new Error('VeWorld connection failed')
-      }
+      // Wait for VeWorld and handle connection
+      await this.waitForVeWorld()
 
       // Get user's address
       const cert = await window.connex.vendor.sign('cert', {

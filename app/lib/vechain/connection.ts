@@ -13,6 +13,53 @@ const TESTNET_CONFIG = {
   }
 }
 
+// Define Connex types based on official docs
+interface ConnexThor {
+  genesis: {
+    id: string;
+  };
+  account(addr: string): {
+    get(): Promise<{
+      balance: string;
+      energy: string;
+      hasCode: boolean;
+    }>;
+  };
+  transaction(txid: string): {
+    get(): Promise<any>;
+    getReceipt(): Promise<{
+      outputs: { contractAddress: string; }[];
+    }>;
+  };
+}
+
+interface ConnexVendor {
+  sign(type: 'cert', params: {
+    purpose: string;
+    payload: {
+      type: string;
+      content: string;
+    };
+  }): {
+    request(): Promise<{
+      annex?: {
+        signer?: string;
+      };
+    }>;
+  };
+}
+
+interface Connex {
+  thor: ConnexThor;
+  vendor: ConnexVendor;
+}
+
+declare global {
+  interface Window {
+    connex: Connex;
+  }
+}
+
 // Simplified connection class
 export class VeChainConnection {
   private status: ConnectionStatus = {
@@ -38,56 +85,64 @@ export class VeChainConnection {
 
   private async waitForConnex(): Promise<void> {
     return new Promise((resolve, reject) => {
-      let attempts = 0
+      // Check if Connex is already available
+      if (window.connex?.thor) {
+        resolve()
+        return
+      }
+
+      // Wait for Connex to be injected by VeWorld
       const maxAttempts = 50
-      const checkInterval = 100 // ms
+      let attempts = 0
 
       const interval = setInterval(() => {
-        attempts++
-        
-        // Check for Connex
         if (window.connex?.thor) {
           clearInterval(interval)
           resolve()
           return
         }
 
-        // Timeout after 5 seconds
+        attempts++
         if (attempts >= maxAttempts) {
           clearInterval(interval)
-          reject(new Error('VeWorld not detected. Please install VeWorld extension and refresh.'))
+          reject(new Error('Please install VeWorld wallet extension'))
         }
-      }, checkInterval)
+      }, 100)
     })
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      console.log('Waiting for Connex...')
       await this.waitForConnex()
-      console.log('Connex detected')
 
-      // Request certificate to get address
-      const cert = await window.connex.vendor.sign('cert', {
-        purpose: 'identification',
-        payload: {
-          type: 'text',
-          content: 'Connect to VFS Incinerator'
-        }
-      }).request()
+      // Get network info
+      const genesis = window.connex.thor.genesis
+      const network = genesis.id === '0x00000000851caf3cfdb6e899cf5958bfb1ac3413d346d43539627e6be7ec1b4a' 
+        ? 'mainnet' 
+        : 'testnet'
 
-      if (!cert?.annex?.signer) {
+      // Request user certificate
+      const certResponse = await window.connex.vendor
+        .sign('cert', {
+          purpose: 'identification',
+          payload: {
+            type: 'text',
+            content: 'Connect to VFS Incinerator'
+          }
+        })
+        .request()
+
+      if (!certResponse?.annex?.signer) {
         throw new Error('Failed to get wallet address')
       }
 
-      // Update status
+      // Update connection status
       this.status = {
         isConnected: true,
-        address: cert.annex.signer,
-        network: 'testnet'
+        address: certResponse.annex.signer,
+        network
       }
 
-      console.log('Connected with address:', this.status.address)
       this.notifyListeners()
       return this.status
 
@@ -120,19 +175,13 @@ export class VeChainConnection {
         throw new Error('Not connected to VeChain')
       }
 
-      console.log('Fetching balance for:', address)
-
       const account = await window.connex.thor.account(address).get()
       
-      const balances = {
+      return {
         vet: account.balance || '0',
         vtho: account.energy || '0',
-        b3tr: '0' // We'll add B3TR later
+        b3tr: '0' // Will implement later
       }
-
-      console.log('Balances:', balances)
-      return balances
-
     } catch (error) {
       console.error('Balance check failed:', error)
       return { vet: '0', vtho: '0', b3tr: '0' }
@@ -157,34 +206,6 @@ export class VeChainConnection {
   public async verifyTestnet(): Promise<boolean> {
     if (!window.connex) return false
     return window.connex.thor.genesis.id === TESTNET_CONFIG.genesis
-  }
-}
-
-// Add Connex types
-declare global {
-  interface Window {
-    connex?: {
-      thor: {
-        account(addr: string): {
-          get(): Promise<{
-            balance: string;
-            energy: string;
-          }>;
-        };
-        genesis: {
-          id: string;
-        };
-      };
-      vendor: {
-        sign(type: string, params: any): {
-          request(): Promise<{
-            annex?: {
-              signer?: string;
-            };
-          }>;
-        };
-      };
-    };
   }
 }
 

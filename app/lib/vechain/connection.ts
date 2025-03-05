@@ -1,5 +1,5 @@
 // Import our types and utilities
-import { ConnectionStatus, Connex } from './types'
+import { ConnectionStatus, Connex, ConnexThor, ConnexVendor } from './types'
 
 // Add testnet configuration
 const TESTNET_CONFIG = {

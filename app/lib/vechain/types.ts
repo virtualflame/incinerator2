@@ -7,7 +7,7 @@ export interface ConnectionStatus {
   network: string;
 }
 
-// Define Connex interface
+// Define Connex interfaces
 export interface ConnexThor {
   genesis: {
     id: string;
@@ -37,15 +37,17 @@ export interface ConnexVendor {
   };
 }
 
+export interface Connex {
+  thor: ConnexThor;
+  vendor: ConnexVendor;
+}
+
 // Extend Window interface
 declare global {
   interface Window {
     readonly vechain: any;
     readonly ethers: any;
-    readonly connex?: {
-      thor: ConnexThor;
-      vendor: ConnexVendor;
-    };
+    readonly connex?: Connex;
   }
 }
 

@@ -34,17 +34,52 @@ declare global {
     };
     readonly vechain: any;
     readonly ethers: any;
+    connex?: Connex;
   }
 }
 
 // Our app's network types
 export type VeChainNetwork = 'mainnet' | 'testnet'
 
-// Connection status type
+// Define VeChain types
 export interface ConnectionStatus {
-  isConnected: boolean
-  address: string | null
-  network: string
+  isConnected: boolean;
+  address: string | null;
+  network: string;
+}
+
+export interface ConnexThor {
+  genesis: {
+    id: string;
+  };
+  account(addr: string): {
+    get(): Promise<{
+      balance: string;
+      energy: string;
+      hasCode?: boolean;
+    }>;
+  };
+}
+
+export interface ConnexVendor {
+  sign(type: 'cert', params: {
+    purpose: string;
+    payload: {
+      type: string;
+      content: string;
+    };
+  }): {
+    request(): Promise<{
+      annex?: {
+        signer?: string;
+      };
+    }>;
+  };
+}
+
+export interface Connex {
+  thor: ConnexThor;
+  vendor: ConnexVendor;
 }
 
 // Add collection types

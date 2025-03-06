@@ -37,20 +37,38 @@ export class VeChainConnection {
 
   private async waitForVeWorld(): Promise<void> {
     for (let i = 1; i <= VEWORLD_CHECK_ATTEMPTS; i++) {
-      if (window.vechain) {
+      // Check for both vechain and connex
+      if (window.vechain && window.connex?.thor) {
         return
       }
+      
+      // Log more specific status
+      if (!window.vechain) {
+        console.log(`Waiting for VeWorld extension... (${i}/${VEWORLD_CHECK_ATTEMPTS})`)
+      } else if (!window.connex?.thor) {
+        console.log(`Waiting for VeWorld initialization... (${i}/${VEWORLD_CHECK_ATTEMPTS})`)
+      }
+      
       await new Promise(resolve => setTimeout(resolve, VEWORLD_CHECK_INTERVAL))
     }
-    throw new Error('VeWorld wallet not detected. Please install VeWorld wallet extension.')
+
+    // More specific error messages
+    if (!window.vechain) {
+      throw new Error('VeWorld wallet not detected. Please install VeWorld wallet extension.')
+    } else if (!window.connex?.thor) {
+      throw new Error('VeWorld not initialized. Please unlock your wallet and refresh.')
+    }
+    
+    throw new Error('VeWorld connection failed. Please refresh and try again.')
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
       await this.waitForVeWorld()
       
-      if (!window.vechain?.thor) {
-        throw new Error('Please unlock your VeWorld wallet and refresh the page')
+      // Additional check for thor
+      if (!window.connex?.thor) {
+        throw new Error('VeWorld not properly initialized. Please unlock your wallet.')
       }
 
       // Check network

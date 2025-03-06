@@ -1,5 +1,4 @@
-import { Providers } from './providers'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { RootWrapper } from '../components/RootWrapper'
 
 export default function RootLayout({
   children,
@@ -9,11 +8,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ErrorBoundary>
-          <Providers>
-            {children}
-          </Providers>
-        </ErrorBoundary>
+        <RootWrapper>
+          {children}
+        </RootWrapper>
       </body>
     </html>
   )

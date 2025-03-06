@@ -1,5 +1,5 @@
-import { QueryClientProvider } from '@tanstack/react-query'
-import { DAppKitProvider } from '@vechain/dapp-kit'
+import { Providers } from './providers'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function RootLayout({
   children,
@@ -9,11 +9,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <QueryClientProvider>
-          <DAppKitProvider>
+        <ErrorBoundary>
+          <Providers>
             {children}
-          </DAppKitProvider>
-        </QueryClientProvider>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   )

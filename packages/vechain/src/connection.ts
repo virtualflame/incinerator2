@@ -7,9 +7,9 @@ const TESTNET_CONFIG = {
   genesis: '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127'
 }
 
-// Add timeout and better error messages
+// Update constants for better timing
 const VEWORLD_CHECK_ATTEMPTS = 50
-const VEWORLD_CHECK_INTERVAL = 100 // ms
+const VEWORLD_CHECK_INTERVAL = 200 // Increased interval
 
 export class VeChainConnection {
   private status: ConnectionStatus = {
@@ -36,80 +36,79 @@ export class VeChainConnection {
   }
 
   private async waitForVeWorld(): Promise<void> {
+    // First check if wallet is installed
+    if (!window.vechain) {
+      throw new Error('VeWorld wallet not detected. Please install VeWorld wallet extension.')
+    }
+
+    // Then wait for initialization
     for (let i = 1; i <= VEWORLD_CHECK_ATTEMPTS; i++) {
-      // Check for both vechain and connex
-      if (window.vechain && window.connex?.thor) {
-        return
+      // Check if wallet is unlocked and initialized
+      if (window.connex?.thor) {
+        // Additional verification
+        try {
+          const chainTag = await window.connex.thor.genesis.id
+          if (chainTag) {
+            return // Successfully initialized
+          }
+        } catch (e) {
+          console.log('Waiting for full initialization...')
+        }
       }
       
-      // Log more specific status
-      if (!window.vechain) {
-        console.log(`Waiting for VeWorld extension... (${i}/${VEWORLD_CHECK_ATTEMPTS})`)
-      } else if (!window.connex?.thor) {
-        console.log(`Waiting for VeWorld initialization... (${i}/${VEWORLD_CHECK_ATTEMPTS})`)
-      }
-      
+      console.log(`Waiting for VeWorld to unlock... (${i}/${VEWORLD_CHECK_ATTEMPTS})`)
       await new Promise(resolve => setTimeout(resolve, VEWORLD_CHECK_INTERVAL))
     }
 
-    // More specific error messages
-    if (!window.vechain) {
-      throw new Error('VeWorld wallet not detected. Please install VeWorld wallet extension.')
-    } else if (!window.connex?.thor) {
-      throw new Error('VeWorld not initialized. Please unlock your wallet and refresh.')
-    }
-    
-    throw new Error('VeWorld connection failed. Please refresh and try again.')
+    throw new Error('Please unlock your VeWorld wallet and refresh the page')
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      await this.waitForVeWorld()
+      // Clear any existing state
+      this.disconnect()
       
-      // Additional check for thor
+      await this.waitForVeWorld()
+
+      // Verify connection is ready
       if (!window.connex?.thor) {
         throw new Error('VeWorld not properly initialized. Please unlock your wallet.')
       }
 
-      // Check network
-      const genesis = window.connex.thor.genesis
-      const isMainnet = genesis.id === '0x00000000851caf3cfdb6e899cf5958bfb1ac3413d346d43539627e6be7ec1b4a'
-      
-      console.log('Getting user address...')
-      // Get user's address
-      const certResponse = await window.connex.vendor
-        .sign('cert', {
-          purpose: 'identification',
-          payload: {
-            type: 'text',
-            content: 'Connect to VFS Incinerator'
-          }
-        })
-        .request()
+      // Get user's address with better error handling
+      try {
+        const certResponse = await window.connex.vendor
+          .sign('cert', {
+            purpose: 'identification',
+            payload: {
+              type: 'text',
+              content: 'Connect to VFS Incinerator'
+            }
+          })
+          .request()
 
-      if (!certResponse?.annex?.signer) {
-        throw new Error('Failed to get wallet address')
+        if (!certResponse?.annex?.signer) {
+          throw new Error('Failed to get wallet address')
+        }
+
+        console.log('Connected with address:', certResponse.annex.signer)
+
+        this.status = {
+          isConnected: true,
+          address: certResponse.annex.signer,
+          network: 'testnet'
+        }
+
+        this.notifyListeners()
+        await this.updateBalances() // Auto-update balances on connect
+        return this.status
+      } catch (err) {
+        throw new Error('Connection request was rejected. Please try again.')
       }
-
-      console.log('Connected with address:', certResponse.annex.signer)
-
-      this.status = {
-        isConnected: true,
-        address: certResponse.annex.signer,
-        network: isMainnet ? 'mainnet' : 'testnet'
-      }
-
-      this.notifyListeners()
-      await this.updateBalances() // Auto-update balances on connect
-      return this.status
 
     } catch (error) {
       console.error('Connection error:', error)
-      this.status = {
-        isConnected: false,
-        address: null,
-        network: 'testnet'
-      }
+      this.disconnect() // Clean up on error
       throw error
     }
   }

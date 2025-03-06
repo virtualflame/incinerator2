@@ -3,11 +3,21 @@ import { useBalance } from '@incinerator/vechain'
 import { LoadingSpinner } from './LoadingSpinner'
 
 export function WalletConnect() {
-  const { connect, disconnect, isConnected, address } = useWallet()
-  const { balances, isLoading, error } = useBalance()
+  const { connect, disconnect, isConnected, address, isLoading, error } = useWallet()
+  const { balances } = useBalance()
 
   if (error) {
-    return <div className="text-red-500">Error: {error.message}</div>
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-red-600">{error.message}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-2 bg-red-500 text-white px-4 py-2 rounded"
+        >
+          Refresh Page
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -15,9 +25,17 @@ export function WalletConnect() {
       {!isConnected ? (
         <button 
           onClick={connect}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          disabled={isLoading}
+          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          Connect Wallet
+          {isLoading ? (
+            <div className="flex items-center">
+              <LoadingSpinner />
+              <span className="ml-2">Connecting...</span>
+            </div>
+          ) : (
+            'Connect Wallet'
+          )}
         </button>
       ) : (
         <div>

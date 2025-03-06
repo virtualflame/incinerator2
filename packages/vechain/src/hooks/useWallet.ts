@@ -1,14 +1,22 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { vechain } from '../connection'
 
 export function useWallet() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
   const connect = useCallback(async () => {
     try {
+      setIsLoading(true)
+      setError(null)
       const status = await vechain.connect()
       return status
-    } catch (error) {
-      console.error('Wallet connection failed:', error)
+    } catch (err) {
+      const error = err as Error
+      setError(error)
       throw error
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -16,6 +24,8 @@ export function useWallet() {
     connect,
     isConnected: vechain.isConnected(),
     address: vechain.getAddress(),
-    disconnect: vechain.disconnect
+    disconnect: vechain.disconnect,
+    isLoading,
+    error
   }
 } 

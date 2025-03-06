@@ -7,6 +7,10 @@ const TESTNET_CONFIG = {
   genesis: '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127'
 }
 
+// Add timeout and better error messages
+const VEWORLD_CHECK_ATTEMPTS = 50
+const VEWORLD_CHECK_INTERVAL = 100 // ms
+
 export class VeChainConnection {
   private status: ConnectionStatus = {
     isConnected: false,
@@ -31,64 +35,22 @@ export class VeChainConnection {
     return typeof window !== 'undefined' && !!window.connex?.thor
   }
 
-  private async waitForConnex(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // First check if already available
-      if (typeof window !== 'undefined' && window.connex?.thor && window.vechain) {
-        resolve()
+  private async waitForVeWorld(): Promise<void> {
+    for (let i = 1; i <= VEWORLD_CHECK_ATTEMPTS; i++) {
+      if (window.vechain) {
         return
       }
-
-      // If not available, wait for injection
-      let attempts = 0
-      const maxAttempts = 50 // Reduced to avoid long waits
-      const checkInterval = 200 // Increased interval
-
-      const checkForConnex = () => {
-        // Check for both VeWorld and Connex
-        if (typeof window !== 'undefined' && window.connex?.thor && window.vechain) {
-          clearInterval(interval)
-          resolve()
-          return
-        }
-
-        attempts++
-        console.log(`Checking for VeWorld... (${attempts}/${maxAttempts})`)
-        
-        if (attempts >= maxAttempts) {
-          clearInterval(interval)
-          if (!window.vechain) {
-            reject(new Error('VeWorld extension not found. Please install VeWorld and refresh.'))
-          } else if (!window.connex?.thor) {
-            reject(new Error('VeWorld not initialized. Please unlock your wallet and refresh.'))
-          } else {
-            reject(new Error('VeWorld connection failed. Please refresh and try again.'))
-          }
-        }
-      }
-
-      // Check immediately
-      checkForConnex()
-      
-      // Then check periodically
-      const interval = setInterval(checkForConnex, checkInterval)
-
-      // Cleanup after 10 seconds
-      setTimeout(() => {
-        clearInterval(interval)
-        reject(new Error('Connection timeout. Please refresh and try again.'))
-      }, 10000)
-    })
+      await new Promise(resolve => setTimeout(resolve, VEWORLD_CHECK_INTERVAL))
+    }
+    throw new Error('VeWorld wallet not detected. Please install VeWorld wallet extension.')
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
-      console.log('Waiting for VeWorld...')
-      await this.waitForConnex()
-      console.log('VeWorld detected')
-
-      if (!window.connex?.thor || !window.vechain) {
-        throw new Error('VeWorld not properly initialized')
+      await this.waitForVeWorld()
+      
+      if (!window.vechain?.thor) {
+        throw new Error('Please unlock your VeWorld wallet and refresh the page')
       }
 
       // Check network

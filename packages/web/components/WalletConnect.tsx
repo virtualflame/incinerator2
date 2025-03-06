@@ -1,3 +1,5 @@
+"use client"
+
 import { useWallet } from '@incinerator/vechain'
 import { useBalance } from '@incinerator/vechain'
 import { LoadingSpinner } from './LoadingSpinner'

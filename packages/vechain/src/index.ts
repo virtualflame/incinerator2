@@ -1,2 +1,3 @@
-export type { ConnectionStatus, Connex, ConnexThor, ConnexVendor } from './types'
-export { VeChainConnection, vechain } from './connection' 
+export * from './connection'
+export * from './types'
+export * from './hooks' 

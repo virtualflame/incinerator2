@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { vechain } from '../connection'
+import { ConnectionStatus } from '../types'
 
 export function useWallet() {
   const [isLoading, setIsLoading] = useState(false)
@@ -22,9 +23,9 @@ export function useWallet() {
 
   return {
     connect,
+    disconnect: vechain.disconnect.bind(vechain),
     isConnected: vechain.isConnected(),
     address: vechain.getAddress(),
-    disconnect: vechain.disconnect,
     isLoading,
     error
   }

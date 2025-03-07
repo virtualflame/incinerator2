@@ -12,4 +12,4 @@ export function RootWrapper({ children }: { children: React.ReactNode }) {
       </QueryClientProvider>
     </ErrorBoundary>
   )
-} 
+}

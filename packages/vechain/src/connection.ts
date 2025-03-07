@@ -44,30 +44,38 @@ export class VeChainConnection {
     // Check for wallet extension
     if (!window.vechain) {
       console.log('VeWorld extension not found')
-      throw new Error('VeWorld wallet not detected. Please install VeWorld wallet extension.')
+      throw new Error('Please install VeWorld wallet extension: https://vechain.github.io/veworld/')
     }
 
-    console.log('VeWorld extension found, waiting for initialization...')
+    console.log('VeWorld extension found, attempting to connect...')
+
+    // Try to trigger the wallet popup
+    try {
+      // This should trigger the VeWorld popup
+      await window.vechain.thor?.enable()
+      console.log('Wallet popup triggered')
+    } catch (e) {
+      console.log('Failed to trigger wallet popup:', e)
+      throw new Error('Please unlock your VeWorld wallet to continue')
+    }
 
     // Then wait for initialization
     for (let i = 1; i <= VEWORLD_CHECK_ATTEMPTS; i++) {
-      // Check if wallet is unlocked and initialized
       if (window.connex?.thor) {
-        // Additional verification
         try {
           const chainTag = await window.connex.thor.genesis.id
           console.log('Connected to chain:', chainTag)
-          return // Successfully initialized
+          return
         } catch (e) {
           console.log('Waiting for full initialization...', e)
         }
       }
       
-      console.log(`Waiting for VeWorld to unlock... (${i}/${VEWORLD_CHECK_ATTEMPTS})`)
+      console.log(`Waiting for VeWorld to initialize... (${i}/${VEWORLD_CHECK_ATTEMPTS})`)
       await new Promise(resolve => setTimeout(resolve, VEWORLD_CHECK_INTERVAL))
     }
 
-    throw new Error('VeWorld not initialized. Please unlock your wallet and refresh.')
+    throw new Error('VeWorld initialization timed out. Please try again.')
   }
 
   public async connect(): Promise<ConnectionStatus> {

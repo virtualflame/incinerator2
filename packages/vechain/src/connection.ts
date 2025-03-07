@@ -184,8 +184,9 @@ export class VeChainConnection {
   }
 
   public async verifyTestnet(): Promise<boolean> {
-    if (!window.connex) return false
-    return window.connex.thor.genesis.id === TESTNET_CONFIG.genesis
+    if (!window.connex) return true // Default to testnet
+    const genesisId = await window.connex.thor.genesis.id
+    return genesisId === TESTNET_CONFIG.genesis
   }
 }
 

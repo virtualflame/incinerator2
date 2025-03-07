@@ -36,10 +36,18 @@ export class VeChainConnection {
   }
 
   private async waitForVeWorld(): Promise<void> {
-    // First check if wallet is installed
+    // First check if we're in a browser
+    if (typeof window === 'undefined') {
+      throw new Error('Cannot connect to VeWorld in a non-browser environment')
+    }
+
+    // Check for wallet extension
     if (!window.vechain) {
+      console.log('VeWorld extension not found')
       throw new Error('VeWorld wallet not detected. Please install VeWorld wallet extension.')
     }
+
+    console.log('VeWorld extension found, waiting for initialization...')
 
     // Then wait for initialization
     for (let i = 1; i <= VEWORLD_CHECK_ATTEMPTS; i++) {
@@ -48,11 +56,10 @@ export class VeChainConnection {
         // Additional verification
         try {
           const chainTag = await window.connex.thor.genesis.id
-          if (chainTag) {
-            return // Successfully initialized
-          }
+          console.log('Connected to chain:', chainTag)
+          return // Successfully initialized
         } catch (e) {
-          console.log('Waiting for full initialization...')
+          console.log('Waiting for full initialization...', e)
         }
       }
       
@@ -60,15 +67,18 @@ export class VeChainConnection {
       await new Promise(resolve => setTimeout(resolve, VEWORLD_CHECK_INTERVAL))
     }
 
-    throw new Error('Please unlock your VeWorld wallet and refresh the page')
+    throw new Error('VeWorld not initialized. Please unlock your wallet and refresh.')
   }
 
   public async connect(): Promise<ConnectionStatus> {
     try {
+      console.log('Starting wallet connection...')
+      
       // Clear any existing state
       this.disconnect()
       
       await this.waitForVeWorld()
+      console.log('VeWorld initialized')
 
       // Verify connection is ready
       if (!window.connex?.thor) {
@@ -77,6 +87,7 @@ export class VeChainConnection {
 
       // Get user's address with better error handling
       try {
+        console.log('Requesting wallet connection...')
         const certResponse = await window.connex.vendor
           .sign('cert', {
             purpose: 'identification',
@@ -100,15 +111,17 @@ export class VeChainConnection {
         }
 
         this.notifyListeners()
-        await this.updateBalances() // Auto-update balances on connect
+        await this.updateBalances()
         return this.status
+
       } catch (err) {
+        console.error('Connection request failed:', err)
         throw new Error('Connection request was rejected. Please try again.')
       }
 
     } catch (error) {
       console.error('Connection error:', error)
-      this.disconnect() // Clean up on error
+      this.disconnect()
       throw error
     }
   }

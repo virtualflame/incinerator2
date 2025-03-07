@@ -1,3 +1,4 @@
+import './globals.css'
 import { RootWrapper } from '../components/RootWrapper'
 
 export default function RootLayout({

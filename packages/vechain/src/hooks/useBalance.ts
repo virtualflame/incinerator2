@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from 'react'
 import { vechain } from '../connection'
 
@@ -7,10 +9,10 @@ export function useBalance() {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    const address = vechain.getAddress()
-    if (!address) return
-
     const updateBalance = async () => {
+      const address = vechain.getAddress()
+      if (!address) return
+
       try {
         setIsLoading(true)
         const balance = await vechain.getBalance(address)
@@ -22,7 +24,16 @@ export function useBalance() {
       }
     }
 
+    const handleStatusChange = () => {
+      updateBalance()
+    }
+
+    vechain.onConnect(handleStatusChange)
     updateBalance()
+
+    return () => {
+      // Cleanup if needed
+    }
   }, [])
 
   return { balances, isLoading, error }

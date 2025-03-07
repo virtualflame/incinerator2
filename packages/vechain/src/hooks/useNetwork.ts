@@ -1,24 +1,23 @@
+"use client"
+
 import { useState, useEffect } from 'react'
 import { vechain } from '../connection'
 
 export function useNetwork() {
   const [isTestnet, setIsTestnet] = useState(false)
-  const [isChecking, setIsChecking] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    async function checkNetwork() {
+    const checkNetwork = async () => {
       try {
         const isTestnet = await vechain.verifyTestnet()
         setIsTestnet(isTestnet)
       } finally {
-        setIsChecking(false)
+        setIsLoading(false)
       }
     }
     checkNetwork()
   }, [])
 
-  return {
-    isTestnet,
-    isChecking
-  }
+  return { isTestnet, isLoading }
 } 

@@ -5,13 +5,17 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc -w",
-    "test": "jest"
+    "dev": "tsc --watch"
   },
   "dependencies": {
-    "@vechain/connex": "^2.0.0"
+    "@vechain/connex": "^2.0.0",
+    "react": "^18.2.0"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
   },
   "devDependencies": {
+    "@types/react": "^18.2.0",
     "typescript": "^5.0.0"
   }
 } 

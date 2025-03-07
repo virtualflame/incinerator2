@@ -7,6 +7,9 @@ const TESTNET_CONFIG = {
     network: 'test',
     genesis: '0x000000000b2bce3c70bc649a02749e8687721b09ed2e15997f466536b20bb127'
 };
+// Update constants for better timing
+const VEWORLD_CHECK_ATTEMPTS = 50;
+const VEWORLD_CHECK_INTERVAL = 200; // Increased interval
 class VeChainConnection {
     constructor() {
         this.status = {
@@ -26,94 +29,93 @@ class VeChainConnection {
         this.connectionListeners.forEach(callback => callback(this.status));
     }
     isWalletAvailable() {
-        return typeof window !== 'undefined' && !!window.connex?.thor;
+        var _a;
+        return typeof window !== 'undefined' && !!((_a = window.connex) === null || _a === void 0 ? void 0 : _a.thor);
     }
-    async waitForConnex() {
-        return new Promise((resolve, reject) => {
-            // First check if already available
-            if (typeof window !== 'undefined' && window.connex?.thor && window.vechain) {
-                resolve();
-                return;
-            }
-            // If not available, wait for injection
-            let attempts = 0;
-            const maxAttempts = 50; // Reduced to avoid long waits
-            const checkInterval = 200; // Increased interval
-            const checkForConnex = () => {
-                // Check for both VeWorld and Connex
-                if (typeof window !== 'undefined' && window.connex?.thor && window.vechain) {
-                    clearInterval(interval);
-                    resolve();
+    async waitForVeWorld() {
+        var _a, _b;
+        // First check if we're in a browser
+        if (typeof window === 'undefined') {
+            throw new Error('Cannot connect to VeWorld in a non-browser environment');
+        }
+        // Check for wallet extension
+        if (!window.vechain) {
+            console.log('VeWorld extension not found');
+            throw new Error('Please install VeWorld wallet extension: https://vechain.github.io/veworld/');
+        }
+        console.log('VeWorld extension found, attempting to connect...');
+        // Try to trigger the wallet popup
+        try {
+            // This should trigger the VeWorld popup
+            await ((_a = window.vechain.thor) === null || _a === void 0 ? void 0 : _a.enable());
+            console.log('Wallet popup triggered');
+        }
+        catch (e) {
+            console.log('Failed to trigger wallet popup:', e);
+            throw new Error('Please unlock your VeWorld wallet to continue');
+        }
+        // Then wait for initialization
+        for (let i = 1; i <= VEWORLD_CHECK_ATTEMPTS; i++) {
+            if ((_b = window.connex) === null || _b === void 0 ? void 0 : _b.thor) {
+                try {
+                    const chainTag = await window.connex.thor.genesis.id;
+                    console.log('Connected to chain:', chainTag);
                     return;
                 }
-                attempts++;
-                console.log(`Checking for VeWorld... (${attempts}/${maxAttempts})`);
-                if (attempts >= maxAttempts) {
-                    clearInterval(interval);
-                    if (!window.vechain) {
-                        reject(new Error('VeWorld extension not found. Please install VeWorld and refresh.'));
-                    }
-                    else if (!window.connex?.thor) {
-                        reject(new Error('VeWorld not initialized. Please unlock your wallet and refresh.'));
-                    }
-                    else {
-                        reject(new Error('VeWorld connection failed. Please refresh and try again.'));
-                    }
+                catch (e) {
+                    console.log('Waiting for full initialization...', e);
                 }
-            };
-            // Check immediately
-            checkForConnex();
-            // Then check periodically
-            const interval = setInterval(checkForConnex, checkInterval);
-            // Cleanup after 10 seconds
-            setTimeout(() => {
-                clearInterval(interval);
-                reject(new Error('Connection timeout. Please refresh and try again.'));
-            }, 10000);
-        });
+            }
+            console.log(`Waiting for VeWorld to initialize... (${i}/${VEWORLD_CHECK_ATTEMPTS})`);
+            await new Promise(resolve => setTimeout(resolve, VEWORLD_CHECK_INTERVAL));
+        }
+        throw new Error('VeWorld initialization timed out. Please try again.');
     }
     async connect() {
+        var _a, _b;
         try {
-            console.log('Waiting for VeWorld...');
-            await this.waitForConnex();
-            console.log('VeWorld detected');
-            if (!window.connex?.thor || !window.vechain) {
-                throw new Error('VeWorld not properly initialized');
+            console.log('Starting wallet connection...');
+            // Clear any existing state
+            this.disconnect();
+            await this.waitForVeWorld();
+            console.log('VeWorld initialized');
+            // Verify connection is ready
+            if (!((_a = window.connex) === null || _a === void 0 ? void 0 : _a.thor)) {
+                throw new Error('VeWorld not properly initialized. Please unlock your wallet.');
             }
-            // Check network
-            const genesis = window.connex.thor.genesis;
-            const isMainnet = genesis.id === '0x00000000851caf3cfdb6e899cf5958bfb1ac3413d346d43539627e6be7ec1b4a';
-            console.log('Getting user address...');
-            // Get user's address
-            const certResponse = await window.connex.vendor
-                .sign('cert', {
-                purpose: 'identification',
-                payload: {
-                    type: 'text',
-                    content: 'Connect to VFS Incinerator'
+            // Get user's address with better error handling
+            try {
+                console.log('Requesting wallet connection...');
+                const certResponse = await window.connex.vendor
+                    .sign('cert', {
+                    purpose: 'identification',
+                    payload: {
+                        type: 'text',
+                        content: 'Connect to VFS Incinerator'
+                    }
+                })
+                    .request();
+                if (!((_b = certResponse === null || certResponse === void 0 ? void 0 : certResponse.annex) === null || _b === void 0 ? void 0 : _b.signer)) {
+                    throw new Error('Failed to get wallet address');
                 }
-            })
-                .request();
-            if (!certResponse?.annex?.signer) {
-                throw new Error('Failed to get wallet address');
+                console.log('Connected with address:', certResponse.annex.signer);
+                this.status = {
+                    isConnected: true,
+                    address: certResponse.annex.signer,
+                    network: 'testnet'
+                };
+                this.notifyListeners();
+                await this.updateBalances();
+                return this.status;
             }
-            console.log('Connected with address:', certResponse.annex.signer);
-            this.status = {
-                isConnected: true,
-                address: certResponse.annex.signer,
-                network: isMainnet ? 'mainnet' : 'testnet'
-            };
-            this.notifyListeners();
-            await this.updateBalances(); // Auto-update balances on connect
-            return this.status;
+            catch (err) {
+                console.error('Connection request failed:', err);
+                throw new Error('Connection request was rejected. Please try again.');
+            }
         }
         catch (error) {
             console.error('Connection error:', error);
-            this.status = {
-                isConnected: false,
-                address: null,
-                network: 'testnet'
-            };
+            this.disconnect();
             throw error;
         }
     }
@@ -123,8 +125,9 @@ class VeChainConnection {
         await this.getBalance(this.status.address);
     }
     async getBalance(address) {
+        var _a;
         try {
-            if (!window.connex?.thor) {
+            if (!((_a = window.connex) === null || _a === void 0 ? void 0 : _a.thor)) {
                 throw new Error('Not connected to VeChain');
             }
             const account = await window.connex.thor.account(address).get();
@@ -148,7 +151,8 @@ class VeChainConnection {
         this.notifyListeners();
     }
     isConnected() {
-        return this.status.isConnected && !!this.status.address && !!window.connex?.thor;
+        var _a;
+        return this.status.isConnected && !!this.status.address && !!((_a = window.connex) === null || _a === void 0 ? void 0 : _a.thor);
     }
     getAddress() {
         return this.status.address;

@@ -1,10 +1,27 @@
-import { useState, useCallback } from 'react'
+"use client"
+
+import { useState, useCallback, useEffect } from 'react'
 import { vechain } from '../connection'
 import { ConnectionStatus } from '../types'
 
 export function useWallet() {
+  const [status, setStatus] = useState<ConnectionStatus>({
+    isConnected: false,
+    address: null,
+    network: 'testnet'
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const handleUpdate = (newStatus: ConnectionStatus) => {
+      setStatus(newStatus)
+    }
+    vechain.onConnect(handleUpdate)
+    return () => {
+      // Cleanup if needed
+    }
+  }, [])
 
   const connect = useCallback(async () => {
     try {
@@ -24,8 +41,8 @@ export function useWallet() {
   return {
     connect,
     disconnect: vechain.disconnect.bind(vechain),
-    isConnected: vechain.isConnected(),
-    address: vechain.getAddress(),
+    isConnected: status.isConnected,
+    address: status.address,
     isLoading,
     error
   }

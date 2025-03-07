@@ -5,7 +5,7 @@ export declare class VeChainConnection {
     onConnect(callback: (status: ConnectionStatus) => void): void;
     private notifyListeners;
     isWalletAvailable(): boolean;
-    private waitForConnex;
+    private waitForVeWorld;
     connect(): Promise<ConnectionStatus>;
     private updateBalances;
     getBalance(address: string): Promise<{

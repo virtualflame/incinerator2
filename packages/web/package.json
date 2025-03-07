@@ -9,13 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@incinerator/vechain": "workspace:*",
     "@headlessui/react": "^1.7.0",
     "@heroicons/react": "^2.0.0",
-    "@hookform/resolvers": "^3.9.1",
-    "@incinerator/vechain": "workspace:*",
-    "@radix-ui/react-dialog": "^1.1.4",
     "@tanstack/react-query": "^5.67.1",
-    "@vechain/dapp-kit": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "next": "14.1.0",

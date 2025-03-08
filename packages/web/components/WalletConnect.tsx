@@ -32,55 +32,77 @@ export function WalletConnect() {
         </span>
       </div>
 
-      {/* Wallet Connection */}
-      <div className="space-y-4">
-        {isLoading && (
-          <div className="flex items-center space-x-2">
-            <LoadingSpinner />
-            <span className="text-gray-600">Connecting...</span>
-          </div>
-        )}
-
-        {!isConnected ? (
-          <button
-            onClick={connect}
-            disabled={isLoading}
-            className="w-full px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 font-medium"
-          >
-            Connect Wallet
-          </button>
-        ) : (
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Connected Address</p>
-              <p className="font-mono text-sm">{address}</p>
+      {/* Action Buttons */}
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          onClick={connect}
+          disabled={isLoading || isConnected}
+          className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 font-medium"
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center space-x-2">
+              <LoadingSpinner />
+              <span>Connecting...</span>
             </div>
+          ) : (
+            'Connect Wallet'
+          )}
+        </button>
 
-            {/* Balances */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">VET</p>
-                <p className="font-medium">{balances.vet}</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">VTHO</p>
-                <p className="font-medium">{balances.vtho}</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">B3TR</p>
-                <p className="font-medium">{balances.b3tr}</p>
-              </div>
-            </div>
+        <button
+          className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 font-medium"
+          disabled={!isConnected}
+        >
+          Burn NFT
+        </button>
 
-            <button
-              onClick={disconnect}
-              className="w-full px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 font-medium"
-            >
-              Disconnect
-            </button>
-          </div>
-        )}
+        <button
+          className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 font-medium"
+          disabled={!isConnected}
+        >
+          Mint NFT
+        </button>
+
+        <button
+          className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 font-medium"
+          disabled={!isConnected}
+        >
+          View NFTs
+        </button>
       </div>
+
+      {/* Wallet Info */}
+      {isConnected && (
+        <div className="space-y-4">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Connected Address</p>
+            <p className="font-mono text-sm">{address}</p>
+          </div>
+
+          {/* Balances */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-500 mb-1">VET</p>
+              <p className="font-medium">{balances.vet}</p>
+            </div>
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-500 mb-1">VTHO</p>
+              <p className="font-medium">{balances.vtho}</p>
+            </div>
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-500 mb-1">B3TR</p>
+              <p className="font-medium">{balances.b3tr}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={disconnect}
+            className="w-full px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 font-medium"
+          >
+            Disconnect
+          </button>
+        </div>
+      )}
     </div>
   )
 } 

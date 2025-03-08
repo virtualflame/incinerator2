@@ -33,35 +33,46 @@ export function WalletConnect() {
       </div>
 
       {/* Action Buttons - Retro Grid */}
-      <div className="grid grid-cols-3 gap-4">
-        <button
-          onClick={connect}
-          disabled={isLoading || isConnected}
-          className="col-span-3 px-6 py-3 bg-gradient-to-b from-orange-500 to-orange-600 text-white rounded border-b-4 border-orange-700 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed active:border-b-0 active:mt-1 transition-all font-bold text-lg shadow-lg"
-        >
-          {isLoading ? (
-            <div className="flex items-center justify-center space-x-2">
-              <LoadingSpinner />
-              <span>Igniting...</span>
-            </div>
-          ) : (
-            'Connect Wallet'
-          )}
-        </button>
+      <div className="grid grid-cols-2 gap-4">
+        {!isConnected ? (
+          <button
+            onClick={connect}
+            disabled={isLoading}
+            className="col-span-2 px-4 py-2 bg-gradient-to-b from-orange-500 to-orange-600 text-white rounded border-b-4 border-orange-700 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed active:border-b-0 active:mt-1 transition-all font-bold shadow-md"
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center space-x-2">
+                <LoadingSpinner />
+                <span>Igniting...</span>
+              </div>
+            ) : (
+              'Connect Wallet'
+            )}
+          </button>
+        ) : (
+          <>
+            <button
+              className="col-span-2 px-6 py-3 bg-gradient-to-b from-red-500 to-red-600 text-white rounded border-b-4 border-red-700 hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed active:border-b-0 active:mt-1 transition-all font-bold text-lg shadow-lg"
+              disabled={!isConnected}
+            >
+              🔥 BURN NFT 🔥
+            </button>
 
-        <button
-          className="px-4 py-2 bg-gradient-to-b from-red-500 to-red-600 text-white rounded border-b-4 border-red-700 hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed active:border-b-0 active:mt-1 transition-all font-bold shadow-md"
-          disabled={!isConnected}
-        >
-          🔥 Burn NFT
-        </button>
+            <button
+              className="px-4 py-2 bg-gradient-to-b from-blue-500 to-blue-600 text-white rounded border-b-4 border-blue-700 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed active:border-b-0 active:mt-1 transition-all font-bold shadow-md"
+              disabled={!isConnected}
+            >
+              👁 View NFTs
+            </button>
 
-        <button
-          className="px-4 py-2 bg-gradient-to-b from-blue-500 to-blue-600 text-white rounded border-b-4 border-blue-700 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed active:border-b-0 active:mt-1 transition-all font-bold shadow-md"
-          disabled={!isConnected}
-        >
-          👁 View NFTs
-        </button>
+            <button
+              onClick={disconnect}
+              className="px-4 py-2 bg-gradient-to-b from-gray-500 to-gray-600 text-white rounded border-b-4 border-gray-700 hover:from-gray-600 hover:to-gray-700 font-bold active:border-b-0 active:mt-1 transition-all shadow-md"
+            >
+              Disconnect
+            </button>
+          </>
+        )}
       </div>
 
       {/* Wallet Info - Retro Card */}
@@ -87,13 +98,6 @@ export function WalletConnect() {
               <p className="font-bold font-mono">{balances.b3tr}</p>
             </div>
           </div>
-
-          <button
-            onClick={disconnect}
-            className="w-full px-4 py-2 bg-gradient-to-b from-gray-500 to-gray-600 text-white rounded border-b-4 border-gray-700 hover:from-gray-600 hover:to-gray-700 font-bold active:border-b-0 active:mt-1 transition-all shadow-md"
-          >
-            Disconnect
-          </button>
         </div>
       )}
     </div>
